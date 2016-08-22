@@ -40,7 +40,7 @@
             card_view:cardCornerRadius="2dp">
 
             <Spinner
-                android:layout_width="140dp"
+                android:layout_width="145dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top|left"
 
@@ -60,7 +60,7 @@
                 android:rotation="90"/>
 
             <Spinner
-                android:layout_width="140dp"
+                android:layout_width="145dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top|right"
                 android:layout_marginRight="10dp"

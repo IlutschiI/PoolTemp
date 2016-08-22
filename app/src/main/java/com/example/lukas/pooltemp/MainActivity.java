@@ -1,14 +1,11 @@
 package com.example.lukas.pooltemp;
 
-import android.animation.PropertyValuesHolder;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
-import android.util.Log;
+import android.text.format.DateUtils;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -21,22 +18,16 @@ import android.view.MenuItem;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.GridLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.db.chart.Tools;
-import com.db.chart.listener.OnEntryClickListener;
-import com.db.chart.model.ChartSet;
 import com.db.chart.model.LineSet;
 import com.db.chart.model.Point;
-import com.db.chart.view.AxisController;
 import com.db.chart.view.LineChartView;
 import com.db.chart.view.Tooltip;
-import com.db.chart.view.animation.Animation;
-import com.db.chart.view.animation.easing.SineEase;
+import com.example.lukas.pooltemp.Adapter.EndDateSpinnerAdapter;
+import com.example.lukas.pooltemp.Adapter.StartDateSpinnerAdapter;
 import com.example.lukas.pooltemp.Controller.LineChartController;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Initialize.Init;
@@ -44,7 +35,6 @@ import com.example.lukas.pooltemp.Model.Temperature;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -58,80 +48,120 @@ public class MainActivity extends AppCompatActivity
     Tooltip tip;
     FloatingActionButton fab;
     ScrollView scrollView;
-    Spinner startDate;
-    Spinner endDate;
+    Spinner startDateSpinner;
+    Spinner endDateSpinner;
     TemperatureDataSource TempSource;
+    SimpleDateFormat sdf;
+    boolean startDateSpinnerInitialized=false;
+    boolean endDateSpinnerInitialized=false;
+    StartDateSpinnerAdapter startDateSpinnerAdapter;
+    EndDateSpinnerAdapter endDateSpinnerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        sdf= new SimpleDateFormat("dd.MM.yyyy");
         setSupportActionBar(toolbar);
-        startDate=(Spinner)findViewById(R.id.startDateSpinner); //Spinner für StartDate
-        endDate=(Spinner)findViewById(R.id.endDateSpinner);     //Spinner für EndDate
+        startDateSpinner =(Spinner)findViewById(R.id.startDateSpinner); //Spinner für StartDate
+        endDateSpinner =(Spinner)findViewById(R.id.endDateSpinner);     //Spinner für EndDate
 
-        startDate.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        startDateSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
+                if(!startDateSpinnerInitialized){
+                    startDateSpinnerInitialized=true;
+                    return;
+                }
+
+                updateChartsRange();
+
                 Date sDate=null;
-                Date eDate=null;
-                try {
-                    if (endDate.getSelectedItem().toString().equals("Datum auswählen")) {
-
-                        //sDate=SimpleDateFormat.getDateInstance().parse(startDate.getSelectedItem().toString());
-                        eDate = new Date(Long.MAX_VALUE);
-
-
-                    } else
-                        eDate = sdf.parse(endDate.getSelectedItem().toString());
-                    if (startDate.getItemAtPosition(position).toString().equals("Datum auswählen")) {
-
-                        //sDate = SimpleDateFormat.getDateInstance().parse(startDate.getSelectedItem().toString());
-                        sDate = new Date(Long.MIN_VALUE);
-
-
+                if (startDateSpinner.getSelectedItem().toString().equals("Datum auswählen")) {
+                    sDate = new Date(Long.MIN_VALUE);
+                }
+                else {
+                    try {
+                        sDate = sdf.parse(sdf.format(startDateSpinner.getSelectedItem()));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
                     }
-                    else
-                        sDate = sdf.parse(startDate.getItemAtPosition(position).toString());
+                }
+
+                List<String>dateList=new LinkedList<>();
+                dateList.add("Datum auswählen");
+                for (Date d:
+                        TempSource.getAllPossibleDates()) {
+
+                    if(d.getTime()>=sDate.getTime()) {
+                        int yearInResult = Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", d));
+                        int monthInResult = Integer.valueOf((String) android.text.format.DateFormat.format("MM", d));
+                        int dayInMonth = Integer.valueOf((String) android.text.format.DateFormat.format("dd", d));
+
+                        dateList.add("" + dayInMonth + "." + monthInResult + "." + yearInResult);
+                    }
 
                 }
-                catch(Exception e){}
+                ArrayAdapter<String> spinneradapter=new ArrayAdapter<String>(getBaseContext(),android.R.layout.simple_spinner_item,dateList);
+                spinneradapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
 
-                List<Temperature>data=TempSource.getTemps(sDate, eDate);
 
-                String[] labels= new String[data.size()];
-                float[] values=new float[labels.length];
-
-                for (int i =0;i<labels.length;i++){
-                    values[i]=(float)data.get(i).getTemp();
-                    labels[i]="";
-                }
-                int year= Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", data.get(0).getTime()));
-                int month= Integer.valueOf((String) android.text.format.DateFormat.format("MM", data.get(0).getTime()));
-                int day= Integer.valueOf((String) android.text.format.DateFormat.format("dd", data.get(0).getTime()));
-                labels[0]=""+day+"."+month+"."+year;
-
-
-                year= Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", data.get(data.size()-1).getTime()));
-                month= Integer.valueOf((String) android.text.format.DateFormat.format("MM", data.get(data.size()-1).getTime()));
-                day= Integer.valueOf((String) android.text.format.DateFormat.format("dd", data.get(data.size()-1).getTime()));
-                labels[labels.length-1]=""+day+"."+month+"."+year;
-
-                LineSet line = new LineSet(labels,values);
-                line.setFill(Color.parseColor("#311B92"))
-                        .setSmooth(true)
-                        .setColor(Color.parseColor("#758cbb"))
-                        .setDotsColor(Color.CYAN);
-                controller.addLine(line);
-                controller.showChart();
-
+                //endDateSpinnerInitialized=false;
+                //endDateSpinner.setAdapter(spinneradapter);
+                endDateSpinnerAdapter.setMinDate((Date)startDateSpinner.getSelectedItem());
         }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        endDateSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if(!endDateSpinnerInitialized){
+                    endDateSpinnerInitialized=true;
+                    return;
+                }
+                updateChartsRange();
+
+                Date sDate=null;
+                if (endDateSpinner.getSelectedItem().toString().equals("Datum auswählen")) {
+                    sDate = new Date(Long.MAX_VALUE);
+                }
+                else {
+                    try {
+                        sDate = sdf.parse(sdf.format((Date)startDateSpinner.getSelectedItem()));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                List<String>dateList=new LinkedList<>();
+                dateList.add("Datum auswählen");
+                for (Date d:
+                        TempSource.getAllPossibleDates()) {
+
+                    if(d.getTime()<=sDate.getTime()) {
+                        int yearInResult = Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", d));
+                        int monthInResult = Integer.valueOf((String) android.text.format.DateFormat.format("MM", d));
+                        int dayInMonth = Integer.valueOf((String) android.text.format.DateFormat.format("dd", d));
+
+                        dateList.add("" + dayInMonth + "." + monthInResult + "." + yearInResult);
+                    }
+
+                }
+                ArrayAdapter<String> spinneradapter=new ArrayAdapter<String>(getBaseContext(),android.R.layout.simple_spinner_item,dateList);
+                spinneradapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                //startDateSpinnerInitialized=false;
+                //startDateSpinner.setAdapter(spinneradapter);
+                startDateSpinnerAdapter.setMinDate((Date)endDateSpinner.getSelectedItem());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
 
             }
         });
@@ -193,7 +223,6 @@ public class MainActivity extends AppCompatActivity
         });
 
         List<String>dateList=new LinkedList<>();
-        String[] dates;
         dateList.add("Datum auswählen");
         for (Date d:
              TempSource.getAllPossibleDates()) {
@@ -208,8 +237,12 @@ public class MainActivity extends AppCompatActivity
         }
         ArrayAdapter<String> spinneradapter=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item,dateList);
         spinneradapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        startDate.setAdapter(spinneradapter);
-        endDate.setAdapter(spinneradapter);
+        startDateSpinnerAdapter=new StartDateSpinnerAdapter(this,TempSource.getAllPossibleDates());
+        endDateSpinnerAdapter=new EndDateSpinnerAdapter(this,TempSource.getAllPossibleDates());
+
+
+        startDateSpinner.setAdapter(startDateSpinnerAdapter);
+        endDateSpinner.setAdapter(endDateSpinnerAdapter);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -219,6 +252,74 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+
+    public void updateChartsRange(){
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
+        Date sDate=null;
+        Date eDate=null;
+        String s = startDateSpinner.getSelectedItem().toString();
+        try {
+            if (((TextView)endDateSpinner.getSelectedView().findViewById(R.id.spinnerItem)).getText().equals("Datum auswählen")) {
+                eDate = new Date(Long.MAX_VALUE);
+            } else
+                eDate =sdf.parse(sdf.format((Date)endDateSpinner.getSelectedItem()));
+
+
+            if (((TextView)startDateSpinner.getSelectedView().findViewById(R.id.spinnerItem)).getText().equals("Datum auswählen")) {
+                sDate = new Date(Long.MIN_VALUE);
+            }
+            else
+                sDate = sdf.parse(sdf.format((Date)startDateSpinner.getSelectedItem()));
+        }
+        catch(Exception e){}
+
+        if(sDate.getTime()==new Date(Long.MAX_VALUE).getTime())
+            sDate=new Date(Long.MIN_VALUE);
+        if(eDate.getTime()==new Date(Long.MIN_VALUE).getTime())
+            sDate=new Date(Long.MAX_VALUE);
+
+        List<Temperature>data=TempSource.getTemps(sDate, eDate);
+
+        String[] labels= new String[data.size()];
+        float[] values=new float[labels.length];
+
+        for (int i =0;i<labels.length;i++){
+            values[i]=(float)data.get(i).getTemp();
+            labels[i]="";
+        }
+        int year= Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", data.get(0).getTime()));
+        int month= Integer.valueOf((String) android.text.format.DateFormat.format("MM", data.get(0).getTime()));
+        int day= Integer.valueOf((String) android.text.format.DateFormat.format("dd", data.get(0).getTime()));
+        labels[0]=""+day+"."+month+"."+year;
+
+
+        year= Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", data.get(data.size()-1).getTime()));
+        month= Integer.valueOf((String) android.text.format.DateFormat.format("MM", data.get(data.size()-1).getTime()));
+        day= Integer.valueOf((String) android.text.format.DateFormat.format("dd", data.get(data.size()-1).getTime()));
+        labels[labels.length-1]=""+day+"."+month+"."+year;
+
+        final LineSet line = new LineSet(labels,values);
+        line.setFill(Color.parseColor("#311B92"))
+                .setSmooth(true)
+                .setColor(Color.parseColor("#758cbb"))
+                .setDotsColor(Color.CYAN);
+        endDateSpinner.setEnabled(false);
+        startDateSpinner.setEnabled(false);
+
+                controller.addLine(line);
+                controller.showChart(new Runnable() {
+                    @Override
+                    public void run() {
+                        endDateSpinner.setEnabled(true);
+                        startDateSpinner.setEnabled(true);
+
+                    }
+                });
+
+
     }
 
 

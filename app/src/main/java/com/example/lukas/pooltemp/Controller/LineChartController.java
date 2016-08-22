@@ -59,6 +59,21 @@ public class LineChartController {
             }
         }));
     }
+    public void showChart(final Runnable r){
+        Animation anim = new Animation()
+                .setEasing(new com.db.chart.view.animation.easing.SineEase());
+        isanimating=true;
+        c.setFabEnabled(!isanimating());
+        chart.show(anim.setEndAction(new Runnable() {
+            @Override
+            public void run() {
+                isanimating=false;
+
+                c.setFabEnabled(!isanimating());
+                r.run();
+            }
+        }));
+    }
 
     public void initTooltip(){
         tip=new Tooltip(c, R.layout.linechart_tooltip,R.id.tooltipValue);
@@ -155,6 +170,9 @@ public class LineChartController {
     public void doInMainThread(Runnable r){
         Handler handler = new Handler(c.getMainLooper());
         handler.post(r);
+    }
+    public void dismissChart(Runnable r){
+        chart.dismiss(new Animation().setEasing(new SineEase()).setEndAction(r));
     }
 
     public boolean isanimating() {
