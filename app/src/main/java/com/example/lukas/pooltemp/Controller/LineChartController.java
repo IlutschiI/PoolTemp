@@ -3,10 +3,13 @@ package com.example.lukas.pooltemp.Controller;
 import android.animation.PropertyValuesHolder;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.view.View;
+import android.widget.TextView;
 
 import com.db.chart.Tools;
+import com.db.chart.listener.OnEntryClickListener;
 import com.db.chart.model.LineSet;
 import com.db.chart.model.Point;
 import com.db.chart.view.AxisController;
@@ -36,9 +39,12 @@ public class LineChartController {
         initTooltip();
         chart.setAxisBorderValues(0, 40, 10);
         chart.setXAxis(true);
-        chart.setBorderSpacing(Tools.fromDpToPx(15));
+        chart.setBorderSpacing(Tools.fromDpToPx(2));
         chart.setYAxis(true);
         chart.setXLabels(AxisController.LabelPosition.OUTSIDE);
+        chart.setClickablePointRadius(20);
+
+
 
 
 
@@ -85,14 +91,17 @@ public class LineChartController {
                 PropertyValuesHolder.ofFloat(View.SCALE_Y, 0f),
                 PropertyValuesHolder.ofFloat(View.SCALE_X, 0f)).setDuration(200);
 
-        tip.setPivotX(Tools.fromDpToPx(65) / 2);
-        tip.setPivotY(Tools.fromDpToPx(25));
+        //tip.setPivotX(Tools.fromDpToPx(65) / 2);
+        //tip.setPivotY(Tools.fromDpToPx(25));
         tip.setVerticalAlignment(Tooltip.Alignment.BOTTOM_TOP);
         tip.setDimensions((int) Tools.fromDpToPx(70), (int) Tools.fromDpToPx(25));
+        //tip.piv
+
 
     }
 
     public void addLine(final LineSet line){
+
 
             chart.reset();
             chart.addData(line);

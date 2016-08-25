@@ -121,12 +121,17 @@ public class TemperatureDataSource {
 
         List<Temperature> result=new LinkedList<>();
         SimpleDateFormat sdf=new SimpleDateFormat("dd.MM.yyyy");
+        long s=startDate.getTime();
+        long en=endDate.getTime();
+        long d;
 
         for (Temperature t :
                 getAllTemperatures()) {
 
             try {
-                java.util.Date date=sdf.parse((String)android.text.format.DateFormat.format("dd.MM.yyyy",t.getTime()));
+                java.util.Date date2=sdf.parse((String)android.text.format.DateFormat.format("dd.MM.yyyy",t.getTime()));
+                java.util.Date date=t.getTime();
+                d=date.getTime();
                 if(date.getTime()>=startDate.getTime()&&date.getTime()<=endDate.getTime())
                 {
                     result.add(t);

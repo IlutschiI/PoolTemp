@@ -6,7 +6,10 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.widget.CardView;
 import android.text.format.DateUtils;
+import android.util.DisplayMetrics;
+import android.view.MotionEvent;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -20,6 +23,7 @@ import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -65,6 +69,10 @@ public class MainActivity extends AppCompatActivity
     TextView tvHighestTemp;
     TextView tvLowestTemp;
     TextView tvAccTemp;
+    CardView ttSeekbar;
+    SeekBar sbTime;
+    CardView ttSeekbarEnd;
+    SeekBar sbTimeEnd;
     ProgressDialog progressBar;
 
 
@@ -88,7 +96,7 @@ public class MainActivity extends AppCompatActivity
         progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressBar.setProgress(-1);
 
-
+        initSeekBars();
 
         startDateSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -305,7 +313,7 @@ public class MainActivity extends AppCompatActivity
 
 
             if (((TextView)startDateSpinner.getSelectedView().findViewById(R.id.spinnerItem)).getText().equals("Datum auswählen")) {
-                sDate = new Date(Long.MIN_VALUE);
+                sDate = new Date(0);
             }
             else
                 sDate = sdf.parse(sdf.format((Date)startDateSpinner.getSelectedItem()));
@@ -321,26 +329,36 @@ public class MainActivity extends AppCompatActivity
 
         Calendar startCalendar=new GregorianCalendar();
         startCalendar.setTime(sDate);
-        startCalendar.set(Calendar.HOUR_OF_DAY,0);
+        startCalendar.set(Calendar.HOUR_OF_DAY,sbTime.getProgress());
         startCalendar.set(Calendar.MINUTE,0);
         startCalendar.set(Calendar.SECOND,0);
         sDate=startCalendar.getTime();
 
-        Calendar endCalendar=new GregorianCalendar();
-        endCalendar.setTime(eDate);
-        endCalendar.set(Calendar.HOUR_OF_DAY,23);
-        endCalendar.set(Calendar.MINUTE,59);
-        endCalendar.set(Calendar.SECOND,59);
-        eDate=endCalendar.getTime();
+        if(eDate.getTime()!=Long.MAX_VALUE){
+            Calendar endCalendar = new GregorianCalendar();
+            endCalendar.setTime(eDate);
+            endCalendar.set(Calendar.HOUR_OF_DAY, sbTimeEnd.getProgress());
+            endCalendar.set(Calendar.MINUTE, 59);
+            endCalendar.set(Calendar.SECOND, 59);
+            eDate = endCalendar.getTime();
+        }
 
         List<Temperature>data=TempSource.getTemps(sDate, eDate);
 
         if(data.size()==0){
-            tvHighestTemp.setText("N/A");
-            tvLowestTemp.setText("N/A");
-            tvAccTemp.setText("N/A");
+            setInfoCardText();
             setFabEnabled(false);
             controller.setEnabled(false);
+            controller.addLine(new LineSet(new String[]{""},new float[]{0}));
+            controller.showChart(new Runnable() {
+                @Override
+                public void run() {
+                    endDateSpinner.setEnabled(true);
+                    startDateSpinner.setEnabled(true);
+
+                }
+            });
+            progressBar.dismiss();
             return;
         }
         else{
@@ -385,6 +403,8 @@ public class MainActivity extends AppCompatActivity
                     }
                 });
 
+        setInfoCardText();
+
         tvHighestTemp.setText(""+TempSource.getHighestTemperature().getTemp()+"°C");
         tvLowestTemp.setText(""+TempSource.getLowestTemperature().getTemp()+"°C");
         tvAccTemp.setText(""+TempSource.getAcctualTemperature().getTemp()+"°C");
@@ -425,6 +445,116 @@ public class MainActivity extends AppCompatActivity
         else
             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#93264B")));
 
+    }
+
+    public void setInfoCardText(){
+        try {
+            tvHighestTemp.setText(""+TempSource.getHighestTemperature().getTemp()+"°C");
+        }
+        catch (Exception e){
+            tvHighestTemp.setText("N/A");
+        }
+
+        try {
+            tvLowestTemp.setText(""+TempSource.getLowestTemperature().getTemp()+"°C");
+        }
+        catch (Exception e){
+            tvLowestTemp.setText("N/A");
+        }
+
+        try {
+            tvAccTemp.setText(""+TempSource.getAcctualTemperature().getTemp()+"°C");
+        }
+        catch (Exception e){
+            tvAccTemp.setText("N/A");
+        }
+    }
+
+    public void initSeekBars(){
+        ttSeekbar=(CardView)findViewById(R.id.ttSeekbar);
+        sbTime=(SeekBar)findViewById(R.id.sbTime);
+        sbTime.setMax(24);
+        sbTime.incrementProgressBy(1);
+        sbTime.setProgress(0);
+
+        sbTime.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if(motionEvent.getAction()==motionEvent.ACTION_DOWN)
+                    ttSeekbar.setVisibility(View.VISIBLE);
+                // else
+                //     ttSeekbar.setVisibility(View.INVISIBLE);
+                return false;
+            }
+        });
+        sbTime.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                if(i>sbTimeEnd.getProgress())
+                {
+                    seekBar.setProgress(i-1);
+                    return;
+                    // Toast.makeText(getBaseContext(),"not allowed",Toast.LENGTH_LONG).show();
+                }
+
+                int x=seekBar.getThumb().getBounds().left;
+                ((TextView)ttSeekbar.findViewById(R.id.ttSeekbarValue)).setText(i+":00");
+                ttSeekbar.setX(x);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                ttSeekbar.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                ttSeekbar.setVisibility(View.INVISIBLE);
+                updateChartsRange();
+            }
+        });
+
+        ttSeekbarEnd=(CardView)findViewById(R.id.ttSeekbarEnd);
+        sbTimeEnd=(SeekBar)findViewById(R.id.sbTimeEnd);
+        sbTimeEnd.setMax(24);
+        sbTimeEnd.setProgress(24);
+        sbTimeEnd.incrementProgressBy(1);
+        sbTimeEnd.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if(motionEvent.getAction()==motionEvent.ACTION_DOWN)
+                    ttSeekbarEnd.setVisibility(View.VISIBLE);
+                // else
+                //     ttSeekbar.setVisibility(View.INVISIBLE);
+                return false;
+            }
+        });
+        sbTimeEnd.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                if(i<sbTime.getProgress())
+                {
+                    seekBar.setProgress(i+1);
+                    return;
+                   // Toast.makeText(getBaseContext(),"not allowed",Toast.LENGTH_LONG).show();
+                }
+
+                int x=seekBar.getThumb().getBounds().left;
+                ((TextView)ttSeekbarEnd.findViewById(R.id.ttSeekbarEndValue)).setText(i+":00");
+                ttSeekbarEnd.setX(x);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                ttSeekbarEnd.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                ttSeekbarEnd.setVisibility(View.INVISIBLE);
+                updateChartsRange();
+            }
+        });
     }
 
     @Override
