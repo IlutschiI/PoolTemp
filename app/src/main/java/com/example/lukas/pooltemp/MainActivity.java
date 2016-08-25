@@ -1,5 +1,6 @@
 package com.example.lukas.pooltemp;
 
+import android.app.ProgressDialog;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -21,6 +22,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.db.chart.model.LineSet;
 import com.db.chart.model.Point;
@@ -32,10 +34,13 @@ import com.example.lukas.pooltemp.Controller.LineChartController;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Initialize.Init;
 import com.example.lukas.pooltemp.Model.Temperature;
+import com.example.lukas.pooltemp.RESTController.RestController;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -56,16 +61,34 @@ public class MainActivity extends AppCompatActivity
     boolean endDateSpinnerInitialized=false;
     StartDateSpinnerAdapter startDateSpinnerAdapter;
     EndDateSpinnerAdapter endDateSpinnerAdapter;
+    MainActivity instance;
+    TextView tvHighestTemp;
+    TextView tvLowestTemp;
+    TextView tvAccTemp;
+    ProgressDialog progressBar;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        instance=this;
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         sdf= new SimpleDateFormat("dd.MM.yyyy");
         setSupportActionBar(toolbar);
         startDateSpinner =(Spinner)findViewById(R.id.startDateSpinner); //Spinner für StartDate
         endDateSpinner =(Spinner)findViewById(R.id.endDateSpinner);     //Spinner für EndDate
+        tvHighestTemp=(TextView)findViewById(R.id.tvHighestTemp);
+        tvLowestTemp=(TextView)findViewById(R.id.tvLowestTemp);
+        tvAccTemp=(TextView)findViewById(R.id.tvAccTemp);
+
+        progressBar=new ProgressDialog(this);
+        progressBar.setCancelable(false);
+        progressBar.setMessage("Daten werden aktualisiert ...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.setProgress(-1);
+
+
 
         startDateSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -128,7 +151,9 @@ public class MainActivity extends AppCompatActivity
                 updateChartsRange();
 
                 Date sDate=null;
-                if (endDateSpinner.getSelectedItem().toString().equals("Datum auswählen")) {
+                String s = endDateSpinner.getSelectedItem().toString();
+                Toast.makeText(getBaseContext(),s,Toast.LENGTH_LONG).show();
+                if (s.equals("Datum auswählen")) {
                     sDate = new Date(Long.MAX_VALUE);
                 }
                 else {
@@ -173,8 +198,11 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {                      //Onclicklistener des FloatingActionButtons
-               if (!controller.isanimating())
-                    controller.addPoint(new Point("", 25));
+               //if (!controller.isanimating())
+                 //   controller.addPoint(new Point("", 25));
+                fab.setEnabled(false);
+                progressBar.show();
+                RestController.getTempsSince(instance,TempSource.getAcctualTemperature().getTime());
 
             }
         });
@@ -182,10 +210,16 @@ public class MainActivity extends AppCompatActivity
 
         TextView tv  = (TextView)findViewById(R.id.mainTV);
         TempSource= new TemperatureDataSource(this);
-        Init.initDB(TempSource);
+        //Init.initDB(TempSource);
 
+        controller = new LineChartController(this,(LineChartView)findViewById(R.id.linechart));
+        controller.initChart();
 
+        progressBar.show();
 
+        RestController.getAllTemps(instance);
+
+/*
         List<Temperature> temps=TempSource.getAllTemperatures();
         data= new float[temps.size()];
         for (int i = 0; i<temps.size();i++) {
@@ -194,17 +228,16 @@ public class MainActivity extends AppCompatActivity
         }
         tv.setText(tv.getText() + "\n \nEs sind " + TempSource.countEntries() + " Einträge vorhanden");
 
-        controller = new LineChartController(this,(LineChartView)findViewById(R.id.linechart));
-        controller.initChart();
+
         LineSet line = new LineSet(new String[] {"10","20","30","40","50","","","","","",""},data);
 
         line.setFill(Color.parseColor("#311B92"))
                 .setSmooth(true)
                 .setColor(Color.parseColor("#758cbb"))
                 .setDotsColor(Color.CYAN);
-        controller.addLine(line);
-        controller.showChart();
-
+        //controller.addLine(line);
+        //controller.showChart();
+*/
         //Scrollview
         //Der FAB wird, wenn hinutergescrolled wird, ausgeblendet
         scrollView=((ScrollView)findViewById(R.id.scrollview));
@@ -257,6 +290,9 @@ public class MainActivity extends AppCompatActivity
 
     public void updateChartsRange(){
 
+        if(!progressBar.isShowing())
+            progressBar.show();
+
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
         Date sDate=null;
         Date eDate=null;
@@ -274,14 +310,43 @@ public class MainActivity extends AppCompatActivity
             else
                 sDate = sdf.parse(sdf.format((Date)startDateSpinner.getSelectedItem()));
         }
-        catch(Exception e){}
+        catch(Exception e){
+            e.printStackTrace();
+        }
 
-        if(sDate.getTime()==new Date(Long.MAX_VALUE).getTime())
+        if(sDate==null||sDate.getTime()==new Date(Long.MAX_VALUE).getTime())
             sDate=new Date(Long.MIN_VALUE);
-        if(eDate.getTime()==new Date(Long.MIN_VALUE).getTime())
-            sDate=new Date(Long.MAX_VALUE);
+        if(eDate==null||eDate.getTime()==new Date(Long.MIN_VALUE).getTime())
+            eDate=new Date(Long.MAX_VALUE);
+
+        Calendar startCalendar=new GregorianCalendar();
+        startCalendar.setTime(sDate);
+        startCalendar.set(Calendar.HOUR_OF_DAY,0);
+        startCalendar.set(Calendar.MINUTE,0);
+        startCalendar.set(Calendar.SECOND,0);
+        sDate=startCalendar.getTime();
+
+        Calendar endCalendar=new GregorianCalendar();
+        endCalendar.setTime(eDate);
+        endCalendar.set(Calendar.HOUR_OF_DAY,23);
+        endCalendar.set(Calendar.MINUTE,59);
+        endCalendar.set(Calendar.SECOND,59);
+        eDate=endCalendar.getTime();
 
         List<Temperature>data=TempSource.getTemps(sDate, eDate);
+
+        if(data.size()==0){
+            tvHighestTemp.setText("N/A");
+            tvLowestTemp.setText("N/A");
+            tvAccTemp.setText("N/A");
+            setFabEnabled(false);
+            controller.setEnabled(false);
+            return;
+        }
+        else{
+
+            controller.setEnabled(true);
+        }
 
         String[] labels= new String[data.size()];
         float[] values=new float[labels.length];
@@ -305,7 +370,8 @@ public class MainActivity extends AppCompatActivity
         line.setFill(Color.parseColor("#311B92"))
                 .setSmooth(true)
                 .setColor(Color.parseColor("#758cbb"))
-                .setDotsColor(Color.CYAN);
+                .setDotsColor(Color.CYAN)
+                .setDotsRadius(5);
         endDateSpinner.setEnabled(false);
         startDateSpinner.setEnabled(false);
 
@@ -318,6 +384,25 @@ public class MainActivity extends AppCompatActivity
 
                     }
                 });
+
+        tvHighestTemp.setText(""+TempSource.getHighestTemperature().getTemp()+"°C");
+        tvLowestTemp.setText(""+TempSource.getLowestTemperature().getTemp()+"°C");
+        tvAccTemp.setText(""+TempSource.getAcctualTemperature().getTemp()+"°C");
+        startDateSpinnerAdapter.setData(TempSource.getAllPossibleDates());
+        endDateSpinnerAdapter.setData(TempSource.getAllPossibleDates());
+
+        Thread t =new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                progressBar.dismiss();
+            }
+        });
+        t.start();
 
 
     }

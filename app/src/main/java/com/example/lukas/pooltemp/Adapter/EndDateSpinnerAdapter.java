@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.example.lukas.pooltemp.R;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -30,11 +31,16 @@ public class EndDateSpinnerAdapter extends ArrayAdapter {
         this.data=data;
         this.context=context;
         data.add(0,new Date(Long.MIN_VALUE));
-
+        minDate=new Date(Long.MIN_VALUE);
     }
 
     public void setMinDate(Date minDate) {
-        this.minDate = minDate;
+        Calendar cal=Calendar.getInstance();
+        cal.setTime(minDate);
+        cal.set(Calendar.HOUR_OF_DAY,0);
+        cal.set(Calendar.MINUTE,0);
+        cal.set(Calendar.MINUTE,0);
+        this.minDate = cal.getTime();
     }
 
     @Override
@@ -75,13 +81,20 @@ public class EndDateSpinnerAdapter extends ArrayAdapter {
         else
             textView.setText("" + day + "." + month + "." + year);
         if((minDate.getTime()>=currentDate.getTime())){
-            row.setVisibility(View.GONE);
-            textView.setHeight(0);
-            textView.setVisibility(View.GONE);
             return new View(parent.getContext());
         }
 
 
         return row;
+    }
+
+    public void setData(List<Date> data) {
+        data.add(0,new Date(Long.MAX_VALUE));
+        this.data = data;
+    }
+
+    @Override
+    public int getCount() {
+        return data.size();
     }
 }

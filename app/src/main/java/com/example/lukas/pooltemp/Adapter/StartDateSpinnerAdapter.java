@@ -84,4 +84,14 @@ public class StartDateSpinnerAdapter extends ArrayAdapter {
 
         return row;
     }
+
+    public void setData(List<Date> data) {
+        data.add(0,new Date(Long.MIN_VALUE));
+        this.data = data;
+    }
+
+    @Override
+    public int getCount() {
+        return data.size();
+    }
 }

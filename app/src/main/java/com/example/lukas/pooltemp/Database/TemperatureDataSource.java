@@ -42,7 +42,7 @@ public class TemperatureDataSource {
         ContentValues values = new ContentValues();
         values.put(SQLiteDBHelper.COLUMN_Date, temp.getTime().getTime());
         values.put(SQLiteDBHelper.COLUMN_TEMP, temp.getTemp());
-
+        open();
         long rowId=database.insert(SQLiteDBHelper.TABLE_Temp,null,values);
         Cursor c = database.rawQuery("Select * from "+SQLiteDBHelper.TABLE_Temp+" where ROWID="+String.valueOf(rowId),null);
         c.moveToFirst();
@@ -54,16 +54,23 @@ public class TemperatureDataSource {
 
     public List<Temperature> getAllTemperatures(){
         List<Temperature> temps=new LinkedList<>();
+
+        if(countEntries()==0)
+            return temps;
+
+        open();
         Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_Date, null);
 
         c.moveToFirst();
-        Temperature t = new Temperature(c.getDouble(2), new java.util.Date(c.getLong(1)),c.getLong(0));
-        temps.add(t);
+        Temperature t;
         while(!c.isLast()){
-            c.moveToNext();
+
             t = new Temperature(c.getDouble(2), new java.util.Date(c.getLong(1)),c.getLong(0));
             temps.add(t);
+            c.moveToNext();
         }
+        t = new Temperature(c.getDouble(2), new java.util.Date(c.getLong(1)),c.getLong(0));
+        temps.add(t);
 
         return temps;
     }
@@ -106,6 +113,7 @@ public class TemperatureDataSource {
     }
 
     public void clearTable(){
+        open();
         database.execSQL("Delete from "+SQLiteDBHelper.TABLE_Temp);
     }
 
@@ -136,8 +144,48 @@ public class TemperatureDataSource {
     }
 
     public int countEntries(){
+        open();
         Cursor c = database.rawQuery("Select count(*) from "+SQLiteDBHelper.TABLE_Temp,null);
         c.moveToFirst();
         return c.getInt(0);
+    }
+
+    public Temperature getHighestTemperature(){
+
+        open();
+        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_TEMP+" DESC", null);
+
+        c.moveToFirst();
+
+        Temperature t = new Temperature(c.getDouble(2),new java.util.Date(c.getLong(1)),c.getLong(0));
+
+        return t;
+
+    }
+
+    public Temperature getLowestTemperature(){
+
+        open();
+        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_TEMP, null);
+
+        c.moveToFirst();
+
+        Temperature t = new Temperature(c.getDouble(2),new java.util.Date(c.getLong(1)),c.getLong(0));
+
+        return t;
+
+    }
+
+    public Temperature getAcctualTemperature(){
+
+        open();
+        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_Date+" DESC", null);
+
+        c.moveToFirst();
+
+        Temperature t = new Temperature(c.getDouble(2),new java.util.Date(c.getLong(1)),c.getLong(0));
+
+        return t;
+
     }
 }

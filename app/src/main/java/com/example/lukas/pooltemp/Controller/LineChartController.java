@@ -88,7 +88,7 @@ public class LineChartController {
         tip.setPivotX(Tools.fromDpToPx(65) / 2);
         tip.setPivotY(Tools.fromDpToPx(25));
         tip.setVerticalAlignment(Tooltip.Alignment.BOTTOM_TOP);
-        tip.setDimensions((int) Tools.fromDpToPx(65), (int) Tools.fromDpToPx(25));
+        tip.setDimensions((int) Tools.fromDpToPx(70), (int) Tools.fromDpToPx(25));
 
     }
 
@@ -177,5 +177,14 @@ public class LineChartController {
 
     public boolean isanimating() {
         return isanimating;
+    }
+
+    public void setEnabled(boolean enabled){
+        chart.setEnabled(enabled);
+        chart.setClickable(enabled);
+        if(!enabled)
+        chart.setTooltips(null);
+        else
+            chart.setTooltips(tip);
     }
 }
