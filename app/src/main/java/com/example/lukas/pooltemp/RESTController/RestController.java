@@ -87,12 +87,13 @@ public class RestController {
     }
 
     public static void getTempsSince(final MainActivity c, Date lastDate){
-        JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, REST_URL+"/"+lastDate.getTime(), new Response.Listener<JSONArray>() {
+        String url=REST_URL+"/"+lastDate.getTime();
+        JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
 
                 TemperatureDataSource temperatureDataSource = new TemperatureDataSource(c);
-                temperatureDataSource.clearTable();
+                //temperatureDataSource.clearTable();
 
                 if(response.length()==0) {
                     c.updateChartsRange();
@@ -134,8 +135,9 @@ public class RestController {
             @Override
             public void onErrorResponse(VolleyError error) {
                 TemperatureDataSource temperatureDataSource = new TemperatureDataSource(c);
-                temperatureDataSource.clearTable();
+                //temperatureDataSource.clearTable();
                 c.updateChartsRange();
+                Toast.makeText(c.getBaseContext(),"Daten konnten nicht aktualisiert werden",Toast.LENGTH_LONG).show();
             }
         });
         RequestQueue queue= Volley.newRequestQueue(c);

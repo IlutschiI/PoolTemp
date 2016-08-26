@@ -4,15 +4,19 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.widget.Toast;
 
 import com.example.lukas.pooltemp.Model.Temperature;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Date;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -144,6 +148,36 @@ public class TemperatureDataSource {
 
         }
 
+        Temperature temp1;
+        Temperature temp2;
+        List<Temperature> minimizedList= new LinkedList<>();
+        while (result.size()>=50)
+        {
+            minimizedList= new LinkedList<>();
+            for (int i = 0;i<result.size();i=i+2){
+                if(i+1<result.size()){
+                    temp1=result.get(i);
+                    temp2=result.get(i+1);
+                    temp1.setTemp((temp1.getTemp()+temp2.getTemp())/2);
+                    minimizedList.add(temp1);
+                }
+            }
+/*
+            temp1=result.get(0);
+            temp2=result.get(1);
+            result.remove(0);
+            result.remove(0);
+            temp1.setTemp((temp1.getTemp()+temp2.getTemp())/2);
+            minimizedList.add(temp1);
+            */
+            result=minimizedList;
+        }
+
+        for (Temperature t :
+                result) {
+            t.setTemp(round(t.getTemp(),2));
+
+        }
 
         return result;
     }
@@ -181,16 +215,51 @@ public class TemperatureDataSource {
 
     }
 
-    public Temperature getAcctualTemperature(){
+    public Temperature getActualTemperature(){
 
         open();
         Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_Date+" DESC", null);
 
         c.moveToFirst();
 
-        Temperature t = new Temperature(c.getDouble(2),new java.util.Date(c.getLong(1)),c.getLong(0));
+        Temperature t = new Temperature(round(c.getDouble(2),2),new java.util.Date(c.getLong(1)),c.getLong(0));
 
         return t;
 
+    }
+
+    public double getAverageOfYesterday(){
+
+        Calendar calendar=GregorianCalendar.getInstance();
+        calendar.add(Calendar.DATE,-1);
+        calendar.set(Calendar.HOUR_OF_DAY,0);
+        calendar.set(Calendar.MINUTE,0);
+        calendar.set(Calendar.SECOND,0);
+
+        long startDate=calendar.getTimeInMillis();
+
+        calendar.set(Calendar.HOUR_OF_DAY,23);
+        calendar.set(Calendar.MINUTE,59);
+        calendar.set(Calendar.SECOND,59);
+
+        long endDate=calendar.getTimeInMillis();
+
+        String query="Select AVG("+SQLiteDBHelper.COLUMN_TEMP+") from " + SQLiteDBHelper.TABLE_Temp +
+                " where "+SQLiteDBHelper.COLUMN_Date+" >= "+startDate+" and "+SQLiteDBHelper.COLUMN_Date+" <= "+endDate;
+
+        Cursor c = database.rawQuery(query, null);
+
+        c.moveToFirst();
+        double result=c.getDouble(0);
+
+        return round(result,2);
+    }
+
+    private double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }

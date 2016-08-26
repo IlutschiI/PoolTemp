@@ -7,6 +7,7 @@ import android.graphics.Rect;
 import android.os.Handler;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.db.chart.Tools;
 import com.db.chart.listener.OnEntryClickListener;
@@ -37,7 +38,7 @@ public class LineChartController {
 
     public void initChart(){
         initTooltip();
-        chart.setAxisBorderValues(0, 40, 10);
+        chart.setAxisBorderValues(10, 30, 5);
         chart.setXAxis(true);
         chart.setBorderSpacing(Tools.fromDpToPx(2));
         chart.setYAxis(true);
@@ -45,7 +46,23 @@ public class LineChartController {
         chart.setClickablePointRadius(20);
 
 
+        chart.setOnEntryClickListener(new OnEntryClickListener() {
 
+            @Override
+            public void onClick(int setIndex, int entryIndex, Rect rect) {
+                c.setSelectedPointCardText(entryIndex);
+                //Toast.makeText(c,"EntryClick:"+test,Toast.LENGTH_LONG).show();
+
+            }
+        });
+        chart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                c.setSelectedPointCardText(-1);
+                //Toast.makeText(c,"onClick:"+test,Toast.LENGTH_LONG).show();
+
+            }
+        });
 
 
         chart.setTooltips(tip);
