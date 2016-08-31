@@ -28,9 +28,19 @@ public class TemperatureDataSource {
     private SQLiteDatabase database;
     private SQLiteDBHelper dbHelper;
     private String[] allColumns = {SQLiteDBHelper.COLUMN_ID,SQLiteDBHelper.COLUMN_TEMP,SQLiteDBHelper.COLUMN_Date};
+    private static TemperatureDataSource instance;
 
-    public TemperatureDataSource(Context c) {
+    public static TemperatureDataSource getInstance(Context context){
+        if(instance==null)
+        {
+            instance=new TemperatureDataSource(context);
+        }
+        return instance;
+    }
+
+    private TemperatureDataSource(Context c) {
         dbHelper=new SQLiteDBHelper(c);
+        open();
     }
 
     public void open(){
@@ -151,7 +161,7 @@ public class TemperatureDataSource {
         Temperature temp1;
         Temperature temp2;
         List<Temperature> minimizedList= new LinkedList<>();
-        while (result.size()>=50)
+        while (result.size()>=100)
         {
             minimizedList= new LinkedList<>();
             for (int i = 0;i<result.size();i=i+2){
@@ -225,6 +235,23 @@ public class TemperatureDataSource {
         Temperature t = new Temperature(round(c.getDouble(2),2),new java.util.Date(c.getLong(1)),c.getLong(0));
 
         return t;
+
+    }
+
+    public int getDateRange(){
+
+        List<java.util.Date> dates = getAllPossibleDates();
+
+        return dates.size()-1;
+        /*
+        if(dates.size()==1)
+            return 0;
+        else
+        {
+            long diff=Math.abs(dates.get(0).getTime()-dates.get(dates.size()-1).getTime());
+
+            return (int)(diff / (24 * 60 * 60 * 1000));
+        }*/
 
     }
 

@@ -18,47 +18,45 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewTreeObserver;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.db.chart.model.LineSet;
-import com.db.chart.view.LineChartView;
 import com.db.chart.view.Tooltip;
 import com.example.lukas.pooltemp.Adapter.EndDateSpinnerAdapter;
+import com.example.lukas.pooltemp.Adapter.LockableScrollView;
 import com.example.lukas.pooltemp.Adapter.StartDateSpinnerAdapter;
-import com.example.lukas.pooltemp.Controller.LineChartController;
+import com.example.lukas.pooltemp.Controller.HelloChartController;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Model.Temperature;
 import com.example.lukas.pooltemp.RESTController.RestController;
 
-import java.text.ParseException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
+
+import lecho.lib.hellocharts.listener.LineChartOnValueSelectListener;
+import lecho.lib.hellocharts.model.PointValue;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    LineChartController controller;
-    LineChartView chart;
     float[] dataFloat;
     Tooltip tip;
     FloatingActionButton fab;
-    ScrollView scrollView;
+    LockableScrollView scrollView;
     Spinner startDateSpinner;
     Spinner endDateSpinner;
     TemperatureDataSource TempSource;
     SimpleDateFormat sdf;
-    boolean startDateSpinnerInitialized=false;
-    boolean endDateSpinnerInitialized=false;
+    boolean startDateSpinnerInitialized = false;
+    boolean endDateSpinnerInitialized = false;
+    boolean isScrollable = true;
     StartDateSpinnerAdapter startDateSpinnerAdapter;
     EndDateSpinnerAdapter endDateSpinnerAdapter;
     MainActivity instance;
@@ -71,16 +69,20 @@ public class MainActivity extends AppCompatActivity
     SeekBar sbTimeEnd;
     ProgressDialog progressBar;
     TextView tvYesterdayTemp;
+    lecho.lib.hellocharts.view.LineChartView helloChart;
+    HelloChartController helloController;
+    Date minDate;
+    Date maxDate;
 
-    List<Temperature>data;
+    List<Temperature> data;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        instance=this;
-
+        instance = this;
+        TempSource = TemperatureDataSource.getInstance(this);
         initControls();
 
 
@@ -88,23 +90,25 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
 
+        TextView tv = (TextView) findViewById(R.id.mainTV);
 
-        TextView tv  = (TextView)findViewById(R.id.mainTV);
-        TempSource= new TemperatureDataSource(this);
         //Init.initDB(TempSource);
 
+
         //LinechartController
-        controller = new LineChartController(this,(LineChartView)findViewById(R.id.linechart));
-        controller.initChart();
+        //controller = new LineChartController(this,(LineChartView)findViewById(R.id.linechart));
+        //controller.initChart();
 
         progressBar.show();
 
-        if(TempSource.countEntries()!=0)
-        {
-            RestController.getTempsSince(instance,TempSource.getActualTemperature().getTime());
-        }
-        else
-        RestController.getAllTemps(instance);
+        if (TempSource.countEntries() != 0) {
+            RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
+        } else
+            RestController.getAllTemps(instance);
+
+        helloController = new HelloChartController(this, helloChart);
+        helloController.setData(TempSource.getAllTemperatures());
+
 
 /*
         List<Temperature> temps=TempSource.getAllTemperatures();
@@ -127,42 +131,26 @@ public class MainActivity extends AppCompatActivity
 */
         //Scrollview
         //Der FAB wird, wenn hinutergescrolled wird, ausgeblendet
-        scrollView=((ScrollView)findViewById(R.id.scrollview));
-        scrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged() {
-                int i=scrollView.getScrollY();
 
-                if (i>=130)
-                {
-                    fab.hide();
-                }
-                else
-                    fab.show();
-            }
-        });
 
-        List<String>dateList=new LinkedList<>();
+        List<String> dateList = new LinkedList<>();
         dateList.add("Datum auswählen");
-        for (Date d:
-             TempSource.getAllPossibleDates()) {
+        for (Date d :
+                TempSource.getAllPossibleDates()) {
 
 
-            int yearInResult= Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", d));
-            int monthInResult= Integer.valueOf((String) android.text.format.DateFormat.format("MM", d));
-            int dayInMonth= Integer.valueOf((String) android.text.format.DateFormat.format("dd", d));
+            int yearInResult = Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", d));
+            int monthInResult = Integer.valueOf((String) android.text.format.DateFormat.format("MM", d));
+            int dayInMonth = Integer.valueOf((String) android.text.format.DateFormat.format("dd", d));
 
-            dateList.add(""+dayInMonth+"."+monthInResult+"."+yearInResult);
+            dateList.add("" + dayInMonth + "." + monthInResult + "." + yearInResult);
 
         }
-        ArrayAdapter<String> spinneradapter=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item,dateList);
+        ArrayAdapter<String> spinneradapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, dateList);
         spinneradapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        startDateSpinnerAdapter=new StartDateSpinnerAdapter(this,TempSource.getAllPossibleDates());
-        endDateSpinnerAdapter=new EndDateSpinnerAdapter(this,TempSource.getAllPossibleDates());
+        startDateSpinnerAdapter = new StartDateSpinnerAdapter(this, TempSource.getAllPossibleDates());
+        endDateSpinnerAdapter = new EndDateSpinnerAdapter(this, TempSource.getAllPossibleDates());
 
-
-        startDateSpinner.setAdapter(startDateSpinnerAdapter);
-        endDateSpinner.setAdapter(endDateSpinnerAdapter);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -175,201 +163,77 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    public void updateChartsRange(){
-
-        if(!progressBar.isShowing())
-            progressBar.show();
-
-        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
-        Date sDate=null;
-        Date eDate=null;
-        String s = startDateSpinner.getSelectedItem().toString();
-        try {
-            if (((TextView)endDateSpinner.getSelectedView().findViewById(R.id.spinnerItem)).getText().equals("Datum auswählen")) {
-                eDate = new Date(Long.MAX_VALUE);
-            } else
-                eDate =sdf.parse(sdf.format((Date)endDateSpinner.getSelectedItem()));
-
-
-            if (((TextView)startDateSpinner.getSelectedView().findViewById(R.id.spinnerItem)).getText().equals("Datum auswählen")) {
-                sDate = new Date(0);
-            }
-            else
-                sDate = sdf.parse(sdf.format((Date)startDateSpinner.getSelectedItem()));
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }
-
-        if(sDate==null||sDate.getTime()==new Date(Long.MAX_VALUE).getTime())
-            sDate=new Date(Long.MIN_VALUE);
-        if(eDate==null||eDate.getTime()==new Date(Long.MIN_VALUE).getTime())
-            eDate=new Date(Long.MAX_VALUE);
-
-        Calendar startCalendar=new GregorianCalendar();
-        startCalendar.setTime(sDate);
-        startCalendar.set(Calendar.HOUR_OF_DAY,sbTime.getProgress());
-        startCalendar.set(Calendar.MINUTE,0);
-        startCalendar.set(Calendar.SECOND,0);
-        sDate=startCalendar.getTime();
-
-        if(eDate.getTime()!=Long.MAX_VALUE){
-            Calendar endCalendar = new GregorianCalendar();
-            endCalendar.setTime(eDate);
-            endCalendar.set(Calendar.HOUR_OF_DAY, sbTimeEnd.getProgress());
-            endCalendar.set(Calendar.MINUTE, 59);
-            endCalendar.set(Calendar.SECOND, 59);
-            eDate = endCalendar.getTime();
-        }
-
-        data =TempSource.getTemps(sDate, eDate);
-
-        if(data.size()==0){
-            setInfoCardText();
-            setFabEnabled(false);
-            controller.setEnabled(false);
-            controller.addLine(new LineSet(new String[]{""},new float[]{0}));
-            controller.showChart(new Runnable() {
-                @Override
-                public void run() {
-                    endDateSpinner.setEnabled(true);
-                    startDateSpinner.setEnabled(true);
-
-                }
-            });
-            progressBar.dismiss();
-            return;
-        }
-        else{
-
-            controller.setEnabled(true);
-        }
-
-        String[] labels= new String[data.size()];
-        float[] values=new float[labels.length];
-
-        for (int i =0;i<labels.length;i++){
-            values[i]=(float) data.get(i).getTemp();
-            labels[i]="";
-        }
-        int year= Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", data.get(0).getTime()));
-        int month= Integer.valueOf((String) android.text.format.DateFormat.format("MM", data.get(0).getTime()));
-        int day= Integer.valueOf((String) android.text.format.DateFormat.format("dd", data.get(0).getTime()));
-        labels[0]=""+day+"."+month+"."+year;
-
-
-        year= Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", data.get(data.size()-1).getTime()));
-        month= Integer.valueOf((String) android.text.format.DateFormat.format("MM", data.get(data.size()-1).getTime()));
-        day= Integer.valueOf((String) android.text.format.DateFormat.format("dd", data.get(data.size()-1).getTime()));
-        labels[labels.length-1]=""+day+"."+month+"."+year;
-
-        final LineSet line = new LineSet(labels,values);
-        line.setFill(Color.parseColor("#311B92"))
-                .setSmooth(true)
-                .setColor(Color.parseColor("#758cbb"))
-                .setDotsColor(Color.CYAN)
-                .setDotsRadius(5);
-        endDateSpinner.setEnabled(false);
-        startDateSpinner.setEnabled(false);
-
-                controller.addLine(line);
-                controller.showChart(new Runnable() {
-                    @Override
-                    public void run() {
-                        endDateSpinner.setEnabled(true);
-                        startDateSpinner.setEnabled(true);
-
-                    }
-                });
-
+    public void updateHelloChart() {
         setInfoCardText();
-
-        tvHighestTemp.setText(""+TempSource.getHighestTemperature().getTemp()+"°C");
-        tvLowestTemp.setText(""+TempSource.getLowestTemperature().getTemp()+"°C");
-        tvAccTemp.setText(""+TempSource.getActualTemperature().getTemp()+"°C");
-        startDateSpinnerAdapter.setData(TempSource.getAllPossibleDates());
-        endDateSpinnerAdapter.setData(TempSource.getAllPossibleDates());
-
-        Thread t =new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                progressBar.dismiss();
-            }
-        });
-        t.start();
-
-
+        helloController.setStartEndOfData(minDate, maxDate);
+        progressBar.dismiss();
+        setFabEnabled(true);
     }
-
 
     /*
         Fab wird Enabled bzw. Disabled und die Farbe wird dementsprechend geändert
      */
-    public void setFabEnabled(boolean b){
-        Drawable background=fab.getBackground();
-        int alpha=background.getAlpha();
+    public void setFabEnabled(boolean b) {
+        Drawable background = fab.getBackground();
+        int alpha = background.getAlpha();
         fab.setEnabled(b);
-        if(b) {
+        if (b) {
 
 
             //fab.setBackgroundColor(Color.parseColor("#FF4081"));
             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FF4081")));
 
-        }
-        else
+        } else
             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#93264B")));
 
     }
 
-    public void setInfoCardText(){
+    public void setInfoCardText() {
         try {
-            tvHighestTemp.setText(""+TempSource.getHighestTemperature().getTemp()+"°C");
-        }
-        catch (Exception e){
+            tvHighestTemp.setText("" + TempSource.getHighestTemperature().getTemp() + "°C");
+        } catch (Exception e) {
             tvHighestTemp.setText("N/A");
         }
 
         try {
-            tvLowestTemp.setText(""+TempSource.getLowestTemperature().getTemp()+"°C");
-        }
-        catch (Exception e){
+            tvLowestTemp.setText("" + TempSource.getLowestTemperature().getTemp() + "°C");
+        } catch (Exception e) {
             tvLowestTemp.setText("N/A");
         }
 
         try {
-            tvAccTemp.setText(""+TempSource.getActualTemperature().getTemp()+"°C");
-        }
-        catch (Exception e){
+            tvAccTemp.setText("" + TempSource.getActualTemperature().getTemp() + "°C");
+        } catch (Exception e) {
             tvAccTemp.setText("N/A");
         }
         try {
-            tvYesterdayTemp.setText(""+TempSource.getAverageOfYesterday()+"°C");
-        }
-        catch (Exception e){
+            tvYesterdayTemp.setText("" + TempSource.getAverageOfYesterday() + "°C");
+        } catch (Exception e) {
             tvYesterdayTemp.setText("N/A");
         }
     }
 
-    public void initSeekBars(){
-        ttSeekbar=(CardView)findViewById(R.id.ttSeekbar);
-        sbTime=(SeekBar)findViewById(R.id.sbTime);
-        sbTime.setMax(23);
+    public void initSeekBars() {
+        ttSeekbar = (CardView) findViewById(R.id.ttSeekbar);
+        sbTime = (SeekBar) findViewById(R.id.sbTime);
+        sbTime.setMax(TempSource.getDateRange());
         sbTime.incrementProgressBy(1);
         sbTime.setProgress(0);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(TempSource.getAllPossibleDates().get(0));
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        minDate = calendar.getTime();
+        ((TextView) ttSeekbar.findViewById(R.id.ttSeekbarValue)).setText(sdf.format(calendar.getTime()));
 
         sbTime.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if(motionEvent.getAction()==motionEvent.ACTION_DOWN)
+                if (motionEvent.getAction() == motionEvent.ACTION_DOWN)
                     ttSeekbar.setVisibility(View.VISIBLE);
-                else if(motionEvent.getAction()==MotionEvent.ACTION_CANCEL)
-                     ttSeekbar.setVisibility(View.INVISIBLE);
-
+                else if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL)
+                    ttSeekbar.setVisibility(View.INVISIBLE);
 
 
                 return false;
@@ -378,15 +242,20 @@ public class MainActivity extends AppCompatActivity
         sbTime.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                if(i>sbTimeEnd.getProgress())
-                {
-                    seekBar.setProgress(i-1);
+                if (i > sbTimeEnd.getProgress()) {
+                    seekBar.setProgress(i - 1);
                     return;
                     // Toast.makeText(getBaseContext(),"not allowed",Toast.LENGTH_LONG).show();
                 }
-
-                int x=seekBar.getThumb().getBounds().left;
-                ((TextView)ttSeekbar.findViewById(R.id.ttSeekbarValue)).setText(i+":00");
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(TempSource.getAllPossibleDates().get(0));
+                calendar.add(Calendar.DATE, i);
+                calendar.set(Calendar.HOUR_OF_DAY, 0);
+                calendar.set(Calendar.MINUTE, 0);
+                calendar.set(Calendar.MINUTE, 0);
+                minDate = calendar.getTime();
+                int x = seekBar.getThumb().getBounds().left;
+                ((TextView) ttSeekbar.findViewById(R.id.ttSeekbarValue)).setText(sdf.format(calendar.getTime()));
                 ttSeekbar.setX(x);
             }
 
@@ -398,21 +267,29 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 ttSeekbar.setVisibility(View.INVISIBLE);
-                updateChartsRange();
+                updateHelloChart();
+                //updateChartsRange();
             }
         });
 
-        ttSeekbarEnd=(CardView)findViewById(R.id.ttSeekbarEnd);
-        sbTimeEnd=(SeekBar)findViewById(R.id.sbTimeEnd);
-        sbTimeEnd.setMax(23);
+        ttSeekbarEnd = (CardView) findViewById(R.id.ttSeekbarEnd);
+
+        calendar.setTime(TempSource.getAllPossibleDates().get(TempSource.getAllPossibleDates().size() - 1));
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.MINUTE, 59);
+        maxDate = calendar.getTime();
+        ((TextView) ttSeekbarEnd.findViewById(R.id.ttSeekbarEndValue)).setText(sdf.format(calendar.getTime()));
+        sbTimeEnd = (SeekBar) findViewById(R.id.sbTimeEnd);
+        sbTimeEnd.setMax(TempSource.getDateRange());
         sbTimeEnd.incrementProgressBy(1);
-        sbTimeEnd.setProgress(23);
+        sbTimeEnd.setProgress(TempSource.getDateRange());
         sbTimeEnd.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if(motionEvent.getAction()==motionEvent.ACTION_DOWN)
+                if (motionEvent.getAction() == motionEvent.ACTION_DOWN)
                     ttSeekbarEnd.setVisibility(View.VISIBLE);
-                else if(motionEvent.getAction()==MotionEvent.ACTION_CANCEL)
+                else if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL)
                     ttSeekbarEnd.setVisibility(View.INVISIBLE);
                 return false;
             }
@@ -420,16 +297,27 @@ public class MainActivity extends AppCompatActivity
         sbTimeEnd.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                if(i<sbTime.getProgress())
-                {
-                    seekBar.setProgress(i+1);
+                if (i < sbTime.getProgress()) {
+                    seekBar.setProgress(i + 1);
                     return;
-                   // Toast.makeText(getBaseContext(),"not allowed",Toast.LENGTH_LONG).show();
+                    // TODO do the same as done in sbTime
                 }
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(TempSource.getAllPossibleDates().get(0));
+                calendar.add(Calendar.DATE, i);
+                calendar.set(Calendar.HOUR_OF_DAY, 23);
+                calendar.set(Calendar.MINUTE, 59);
+                calendar.set(Calendar.MINUTE, 59);
+                maxDate = calendar.getTime();
+                ((TextView) ttSeekbarEnd.findViewById(R.id.ttSeekbarEndValue)).setText(sdf.format(calendar.getTime()));
 
-                int x=seekBar.getThumb().getBounds().left;
-                ((TextView)ttSeekbarEnd.findViewById(R.id.ttSeekbarEndValue)).setText(i+":59");
+                // Toast.makeText(getBaseContext(),"not allowed",Toast.LENGTH_LONG).show();
+
+
+                int x = seekBar.getThumb().getBounds().left;
+                //((TextView)ttSeekbarEnd.findViewById(R.id.ttSeekbarEndValue)).setText(i+":59");
                 ttSeekbarEnd.setX(x);
+
             }
 
             @Override
@@ -440,130 +328,67 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 ttSeekbarEnd.setVisibility(View.INVISIBLE);
-                updateChartsRange();
+                //updateChartsRange();
+                updateHelloChart();
             }
         });
     }
 
-    private void initControls(){
+    private void initControls() {
 
-        sdf= new SimpleDateFormat("dd.MM.yyyy");
-        startDateSpinner =(Spinner)findViewById(R.id.startDateSpinner); //Spinner für StartDate
-        endDateSpinner =(Spinner)findViewById(R.id.endDateSpinner);     //Spinner für EndDate
-        tvHighestTemp=(TextView)findViewById(R.id.tvHighestTemp);
-        tvLowestTemp=(TextView)findViewById(R.id.tvLowestTemp);
-        tvAccTemp=(TextView)findViewById(R.id.tvAccTemp);
-        tvYesterdayTemp=(TextView) findViewById(R.id.tvYesterdayTemp);
+        sdf = new SimpleDateFormat("dd.MM.yyyy");
+        tvHighestTemp = (TextView) findViewById(R.id.tvHighestTemp);
+        tvLowestTemp = (TextView) findViewById(R.id.tvLowestTemp);
+        tvAccTemp = (TextView) findViewById(R.id.tvAccTemp);
+        tvYesterdayTemp = (TextView) findViewById(R.id.tvYesterdayTemp);
 
-        progressBar=new ProgressDialog(this);
-        progressBar.setCancelable(false);
+        progressBar = new ProgressDialog(this);
+        progressBar.setCancelable(true);
         progressBar.setMessage("Daten werden aktualisiert ...");
         progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressBar.setProgress(-1);
 
-
-        startDateSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        helloChart = (lecho.lib.hellocharts.view.LineChartView) findViewById(R.id.helloLinechart);
+        helloChart.setOnValueTouchListener(new LineChartOnValueSelectListener() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if(!startDateSpinnerInitialized){
-                    startDateSpinnerInitialized=true;
-                    return;
-                }
-
-                updateChartsRange();
-
-                Date sDate=null;
-                if (startDateSpinner.getSelectedItem().toString().equals("Datum auswählen")) {
-                    sDate = new Date(Long.MIN_VALUE);
-                }
-                else {
-                    try {
-                        sDate = sdf.parse(sdf.format(startDateSpinner.getSelectedItem()));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                List<String>dateList=new LinkedList<>();
-                dateList.add("Datum auswählen");
-                for (Date d:
-                        TempSource.getAllPossibleDates()) {
-
-                    if(d.getTime()>=sDate.getTime()) {
-                        int yearInResult = Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", d));
-                        int monthInResult = Integer.valueOf((String) android.text.format.DateFormat.format("MM", d));
-                        int dayInMonth = Integer.valueOf((String) android.text.format.DateFormat.format("dd", d));
-
-                        dateList.add("" + dayInMonth + "." + monthInResult + "." + yearInResult);
-                    }
-
-                }
-                ArrayAdapter<String> spinneradapter=new ArrayAdapter<String>(getBaseContext(),android.R.layout.simple_spinner_item,dateList);
-                spinneradapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-
-
-
-                //endDateSpinnerInitialized=false;
-                //endDateSpinner.setAdapter(spinneradapter);
-                endDateSpinnerAdapter.setMinDate((Date)startDateSpinner.getSelectedItem());
+            public void onValueSelected(int lineIndex, int pointIndex, PointValue value) {
+                Temperature accTemp=new Temperature(value.getY(),new Date((long)value.getX()));
+                setSelectedPointCardText(accTemp);
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-        endDateSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                if(!endDateSpinnerInitialized){
-                    endDateSpinnerInitialized=true;
-                    return;
-                }
-                updateChartsRange();
-
-                Date sDate=null;
-                String s = endDateSpinner.getSelectedItem().toString();
-                Toast.makeText(getBaseContext(),s,Toast.LENGTH_LONG).show();
-                if (s.equals("Datum auswählen")) {
-                    sDate = new Date(Long.MAX_VALUE);
-                }
-                else {
-                    try {
-                        sDate = sdf.parse(sdf.format((Date)startDateSpinner.getSelectedItem()));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                List<String>dateList=new LinkedList<>();
-                dateList.add("Datum auswählen");
-                for (Date d:
-                        TempSource.getAllPossibleDates()) {
-
-                    if(d.getTime()<=sDate.getTime()) {
-                        int yearInResult = Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", d));
-                        int monthInResult = Integer.valueOf((String) android.text.format.DateFormat.format("MM", d));
-                        int dayInMonth = Integer.valueOf((String) android.text.format.DateFormat.format("dd", d));
-
-                        dateList.add("" + dayInMonth + "." + monthInResult + "." + yearInResult);
-                    }
-
-                }
-                ArrayAdapter<String> spinneradapter=new ArrayAdapter<String>(getBaseContext(),android.R.layout.simple_spinner_item,dateList);
-                spinneradapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                //startDateSpinnerInitialized=false;
-                //startDateSpinner.setAdapter(spinneradapter);
-                startDateSpinnerAdapter.setMinDate((Date)endDateSpinner.getSelectedItem());
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
+            public void onValueDeselected() {
 
             }
         });
 
 
+        helloChart.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL || motionEvent.getAction() != MotionEvent.ACTION_UP)
+                    isScrollable = false;
+                else
+                    isScrollable = true;
+                scrollView.setScrollable(isScrollable);
+                return false;
+            }
+        });
+
+
+
+        scrollView = ((LockableScrollView) findViewById(R.id.scrollview));
+        scrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
+            @Override
+            public void onScrollChanged() {
+                int i = scrollView.getScrollY();
+
+                if (i >= 130) {
+                    fab.hide();
+                } else
+                    fab.show();
+            }
+        });
 
 
         fab = (FloatingActionButton) findViewById(R.id.fab);    //FloatingActionButton
@@ -574,7 +399,7 @@ public class MainActivity extends AppCompatActivity
                 //   controller.addPoint(new Point("", 25));
                 fab.setEnabled(false);
                 progressBar.show();
-                RestController.getTempsSince(instance,TempSource.getActualTemperature().getTime());
+                RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
 
             }
         });
@@ -582,17 +407,17 @@ public class MainActivity extends AppCompatActivity
         initSeekBars();
     }
 
-    public void setSelectedPointCardText(int pos){
+    public void setSelectedPointCardText(Temperature acc) {
 
-        if(pos==-1){
-            ((TextView)findViewById(R.id.tvSelctedTemp)).setText("N/A");
-            ((TextView)findViewById(R.id.tvSelctedTempTime)).setText("N/A");
+        if (acc == null) {
+            ((TextView) findViewById(R.id.tvSelctedTemp)).setText("N/A");
+            ((TextView) findViewById(R.id.tvSelctedTempTime)).setText("N/A");
             return;
         }
 
-        ((TextView)findViewById(R.id.tvSelctedTemp)).setText(data.get(pos).getTemp()+"°C");
-        SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-        ((TextView)findViewById(R.id.tvSelctedTempTime)).setText(simpleDateFormat.format(data.get(pos).getTime()));
+        ((TextView) findViewById(R.id.tvSelctedTemp)).setText(round(acc.getTemp(),2) + "°C");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+        ((TextView) findViewById(R.id.tvSelctedTempTime)).setText(simpleDateFormat.format(acc.getTime()));
     }
 
     @Override
@@ -651,5 +476,13 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        BigDecimal bd = new BigDecimal(value);
+        bd = bd.setScale(places, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 }

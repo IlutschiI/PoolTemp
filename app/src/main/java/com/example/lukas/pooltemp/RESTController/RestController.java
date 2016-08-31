@@ -35,11 +35,11 @@ public class RestController {
             @Override
             public void onResponse(JSONArray response) {
 
-                TemperatureDataSource temperatureDataSource = new TemperatureDataSource(c);
+                TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 temperatureDataSource.clearTable();
 
                 if(response.length()==0) {
-                    c.updateChartsRange();
+                    c.updateHelloChart();
                     return;
                 }
 
@@ -70,16 +70,16 @@ public class RestController {
 
                 }
                 // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
-                c.updateChartsRange();
+                c.updateHelloChart();
 
 
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                TemperatureDataSource temperatureDataSource = new TemperatureDataSource(c);
+                TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 temperatureDataSource.clearTable();
-                c.updateChartsRange();
+                c.updateHelloChart();
             }
         });
 
@@ -92,11 +92,11 @@ public class RestController {
             @Override
             public void onResponse(JSONArray response) {
 
-                TemperatureDataSource temperatureDataSource = new TemperatureDataSource(c);
+                TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
 
                 if(response.length()==0) {
-                    c.updateChartsRange();
+                    c.updateHelloChart();
                     return;
                 }
 
@@ -108,7 +108,7 @@ public class RestController {
                 String t="";
                 Temperature temperature;
                 try {
-                    for (int i = 0; i < response.length(); i++) {
+                    for (int i = 1; i < response.length(); i++) {
 
                         jsonObject = response.getJSONObject(i);
 
@@ -127,16 +127,16 @@ public class RestController {
 
                 }
                 // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
-                c.updateChartsRange();
+                c.updateHelloChart();
 
 
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                TemperatureDataSource temperatureDataSource = new TemperatureDataSource(c);
+                TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
-                c.updateChartsRange();
+                c.updateHelloChart();
                 Toast.makeText(c.getBaseContext(),"Daten konnten nicht aktualisiert werden",Toast.LENGTH_LONG).show();
             }
         });
