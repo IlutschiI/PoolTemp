@@ -83,6 +83,10 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         instance = this;
         TempSource = TemperatureDataSource.getInstance(this);
+        if (TempSource.countEntries() != 0) {
+            RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
+        } else
+            RestController.getAllTemps(instance);
         initControls();
 
 
@@ -101,10 +105,6 @@ public class MainActivity extends AppCompatActivity
 
         progressBar.show();
 
-        if (TempSource.countEntries() != 0) {
-            RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
-        } else
-            RestController.getAllTemps(instance);
 
         helloController = new HelloChartController(this, helloChart);
         helloController.setData(TempSource.getAllTemperatures());
@@ -216,6 +216,7 @@ public class MainActivity extends AppCompatActivity
     public void initSeekBars() {
         ttSeekbar = (CardView) findViewById(R.id.ttSeekbar);
         sbTime = (SeekBar) findViewById(R.id.sbTime);
+
         sbTime.setMax(TempSource.getDateRange());
         sbTime.incrementProgressBy(1);
         sbTime.setProgress(0);
@@ -332,6 +333,7 @@ public class MainActivity extends AppCompatActivity
                 updateHelloChart();
             }
         });
+
     }
 
     private void initControls() {
@@ -352,7 +354,7 @@ public class MainActivity extends AppCompatActivity
         helloChart.setOnValueTouchListener(new LineChartOnValueSelectListener() {
             @Override
             public void onValueSelected(int lineIndex, int pointIndex, PointValue value) {
-                Temperature accTemp=new Temperature(value.getY(),new Date((long)value.getX()));
+                Temperature accTemp = new Temperature(value.getY(), new Date((long) value.getX()));
                 setSelectedPointCardText(accTemp);
             }
 
@@ -374,7 +376,6 @@ public class MainActivity extends AppCompatActivity
                 return false;
             }
         });
-
 
 
         scrollView = ((LockableScrollView) findViewById(R.id.scrollview));
@@ -415,7 +416,7 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        ((TextView) findViewById(R.id.tvSelctedTemp)).setText(round(acc.getTemp(),2) + "°C");
+        ((TextView) findViewById(R.id.tvSelctedTemp)).setText(round(acc.getTemp(), 2) + "°C");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         ((TextView) findViewById(R.id.tvSelctedTempTime)).setText(simpleDateFormat.format(acc.getTime()));
     }
@@ -446,7 +447,14 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_reload) {
+            progressBar.show();
             RestController.getAllTemps(instance);
+            return true;
+        }
+
+        if (id == R.id.action_forceTemperature) {
+            progressBar.show();
+            RestController.forceNewTemperature(instance);
             return true;
         }
 

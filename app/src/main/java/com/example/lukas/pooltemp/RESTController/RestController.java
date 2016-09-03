@@ -3,11 +3,13 @@ package com.example.lukas.pooltemp.RESTController;
 import android.content.Context;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
@@ -142,6 +144,63 @@ public class RestController {
         });
         RequestQueue queue= Volley.newRequestQueue(c);
         queue.add(request);
+    }
+
+    public static void forceNewTemperature(final MainActivity c){
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, REST_URL+"/forceTemperature", new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+
+                TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
+
+
+                if(response.length()==0) {
+                    c.updateHelloChart();
+                    return;
+                }
+
+                System.out.println(response);
+                JSONObject jsonObject;
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                double temp;
+                Date time;
+                String t="";
+                Temperature temperature;
+                try {
+
+
+                        jsonObject = response;
+
+                        temp=jsonObject.getDouble("temperature");
+                        t=jsonObject.getString("time").substring(0,19);
+                        time=sdf.parse(jsonObject.getString("time").substring(0,19));
+                        temperature=new Temperature(temp,time);
+                        temperatureDataSource.insertTemperature(temperature);
+
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                } catch (ParseException e) {
+                    e.printStackTrace();
+
+                }
+                // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
+                c.updateHelloChart();
+
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
+                //temperatureDataSource.clearTable();
+                c.updateHelloChart();
+            }
+        });
+
+        request.setRetryPolicy(new DefaultRetryPolicy(5000,DefaultRetryPolicy.DEFAULT_MAX_RETRIES,DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        Volley.newRequestQueue(c).add(request);
     }
 
 }
