@@ -1,11 +1,14 @@
-package com.example.lukas.pooltemp;
+package com.example.lukas.pooltemp.Activitys;
 
 import android.app.ProgressDialog;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.CardView;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,7 +21,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewTreeObserver;
-import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -30,6 +33,7 @@ import com.example.lukas.pooltemp.Adapter.StartDateSpinnerAdapter;
 import com.example.lukas.pooltemp.Controller.HelloChartController;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Model.Temperature;
+import com.example.lukas.pooltemp.R;
 import com.example.lukas.pooltemp.RESTController.RestController;
 
 import java.math.BigDecimal;
@@ -73,28 +77,57 @@ public class MainActivity extends AppCompatActivity
     HelloChartController helloController;
     Date minDate;
     Date maxDate;
+    boolean initSeekbars = false;
+    List<Date> possibleDates;
+    ImageButton ib_zoom;
+    ImageButton ib_zoomOut;
+
 
     List<Temperature> data;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        System.out.println("---------------------------------------System start----------------------------------");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         instance = this;
         TempSource = TemperatureDataSource.getInstance(this);
         if (TempSource.countEntries() != 0) {
-            RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
+            //RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
         } else
             RestController.getAllTemps(instance);
-        initControls();
+
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!before all Dates");
+        possibleDates = TempSource.getAllPossibleDates();
+        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!after all Dates");
+
+        progressBar = new ProgressDialog(this);
+        progressBar.setCancelable(false);
+        progressBar.setMessage("Daten werden aktualisiert ...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.setProgress(-1);
+        progressBar.show();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                initControls();
+
+                helloController = new HelloChartController(instance, helloChart);
+                helloController.setData(TempSource.getAllTemperatures());
+                updateHelloChart();
+                progressBar.dismiss();
+            }
+        }).start();
 
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
         setSupportActionBar(toolbar);
 
 
-        TextView tv = (TextView) findViewById(R.id.mainTV);
+        //TextView tv = (TextView) findViewById(R.id.mainTV);
 
         //Init.initDB(TempSource);
 
@@ -103,11 +136,10 @@ public class MainActivity extends AppCompatActivity
         //controller = new LineChartController(this,(LineChartView)findViewById(R.id.linechart));
         //controller.initChart();
 
-        progressBar.show();
 
 
-        helloController = new HelloChartController(this, helloChart);
-        helloController.setData(TempSource.getAllTemperatures());
+
+
 
 
 /*
@@ -136,7 +168,7 @@ public class MainActivity extends AppCompatActivity
         List<String> dateList = new LinkedList<>();
         dateList.add("Datum auswählen");
         for (Date d :
-                TempSource.getAllPossibleDates()) {
+                possibleDates) {
 
 
             int yearInResult = Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", d));
@@ -146,10 +178,8 @@ public class MainActivity extends AppCompatActivity
             dateList.add("" + dayInMonth + "." + monthInResult + "." + yearInResult);
 
         }
-        ArrayAdapter<String> spinneradapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, dateList);
-        spinneradapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        startDateSpinnerAdapter = new StartDateSpinnerAdapter(this, TempSource.getAllPossibleDates());
-        endDateSpinnerAdapter = new EndDateSpinnerAdapter(this, TempSource.getAllPossibleDates());
+
+
 
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -160,60 +190,81 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
     }
 
 
     public void updateHelloChart() {
         setInfoCardText();
+        if (!initSeekbars)
+            initSeekBars();
+        possibleDates = TempSource.getAllPossibleDates();
         helloController.setStartEndOfData(minDate, maxDate);
         progressBar.dismiss();
         setFabEnabled(true);
+        System.out.println("----------------------------System running--------------------------");
     }
 
     /*
         Fab wird Enabled bzw. Disabled und die Farbe wird dementsprechend geändert
      */
-    public void setFabEnabled(boolean b) {
-        Drawable background = fab.getBackground();
-        int alpha = background.getAlpha();
-        fab.setEnabled(b);
-        if (b) {
+    public void setFabEnabled(final boolean b) {
+        Handler mainHandler = new Handler(getMainLooper());
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                fab.setEnabled(b);
+                if (b) {
 
 
-            //fab.setBackgroundColor(Color.parseColor("#FF4081"));
-            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FF4081")));
+                    //fab.setBackgroundColor(Color.parseColor("#FF4081"));
+                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FF4081")));
 
-        } else
-            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#93264B")));
+                } else
+                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#93264B")));
+            }
+        });
+        //int alpha = background.getAlpha();
+
 
     }
 
     public void setInfoCardText() {
-        try {
-            tvHighestTemp.setText("" + TempSource.getHighestTemperature().getTemp() + "°C");
-        } catch (Exception e) {
-            tvHighestTemp.setText("N/A");
-        }
 
-        try {
-            tvLowestTemp.setText("" + TempSource.getLowestTemperature().getTemp() + "°C");
-        } catch (Exception e) {
-            tvLowestTemp.setText("N/A");
-        }
+        Handler mainHandler = new Handler(getMainLooper());
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    tvHighestTemp.setText("" + TempSource.getHighestTemperature().getTemp() + "°C");
+                } catch (Exception e) {
+                    tvHighestTemp.setText("N/A");
+                }
 
-        try {
-            tvAccTemp.setText("" + TempSource.getActualTemperature().getTemp() + "°C");
-        } catch (Exception e) {
-            tvAccTemp.setText("N/A");
-        }
-        try {
-            tvYesterdayTemp.setText("" + TempSource.getAverageOfYesterday() + "°C");
-        } catch (Exception e) {
-            tvYesterdayTemp.setText("N/A");
-        }
+                try {
+                    tvLowestTemp.setText("" + TempSource.getLowestTemperature().getTemp() + "°C");
+                } catch (Exception e) {
+                    tvLowestTemp.setText("N/A");
+                }
+
+                try {
+                    tvAccTemp.setText("" + TempSource.getActualTemperature().getTemp() + "°C");
+                } catch (Exception e) {
+                    tvAccTemp.setText("N/A");
+                }
+                try {
+                    tvYesterdayTemp.setText("" + TempSource.getAverageOfYesterday() + "°C");
+                } catch (Exception e) {
+                    tvYesterdayTemp.setText("N/A");
+                }
+            }
+        });
+
+
     }
 
     public void initSeekBars() {
+        initSeekbars = true;
         ttSeekbar = (CardView) findViewById(R.id.ttSeekbar);
         sbTime = (SeekBar) findViewById(R.id.sbTime);
 
@@ -221,7 +272,7 @@ public class MainActivity extends AppCompatActivity
         sbTime.incrementProgressBy(1);
         sbTime.setProgress(0);
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(TempSource.getAllPossibleDates().get(0));
+        calendar.setTime(possibleDates.get(0));
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.MINUTE, 0);
@@ -249,15 +300,43 @@ public class MainActivity extends AppCompatActivity
                     // Toast.makeText(getBaseContext(),"not allowed",Toast.LENGTH_LONG).show();
                 }
                 Calendar calendar = Calendar.getInstance();
-                calendar.setTime(TempSource.getAllPossibleDates().get(0));
+                calendar.setTime(possibleDates.get(0));
                 calendar.add(Calendar.DATE, i);
                 calendar.set(Calendar.HOUR_OF_DAY, 0);
                 calendar.set(Calendar.MINUTE, 0);
                 calendar.set(Calendar.MINUTE, 0);
                 minDate = calendar.getTime();
-                int x = seekBar.getThumb().getBounds().left;
+
+
                 ((TextView) ttSeekbar.findViewById(R.id.ttSeekbarValue)).setText(sdf.format(calendar.getTime()));
-                ttSeekbar.setX(x);
+                int width = seekBar.getWidth()
+                        - seekBar.getPaddingLeft()
+                        - seekBar.getPaddingRight();
+                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.JELLY_BEAN) {
+                    int x = seekBar.getThumb().getBounds().left;
+                    if(((double)x/width)>=0.9)
+                    x=(int)(width*0.90);
+                    ttSeekbar.setX(x);
+                }
+                else
+                {
+
+                    int thumbPos = seekBar.getPaddingLeft()
+                            + width
+                            * seekBar.getProgress()
+                            / seekBar.getMax();
+
+                    if (thumbPos > width - 20) {
+                        thumbPos = width - 80;
+                    }
+                    CardView.LayoutParams layoutParams = new CardView.LayoutParams(
+                            CardView.LayoutParams.WRAP_CONTENT, CardView.LayoutParams.WRAP_CONTENT);
+                    layoutParams.setMargins(thumbPos - 20, 100, 0, 0);
+
+                    ttSeekbar.setLayoutParams(layoutParams);
+                    ttSeekbar.requestLayout();
+                }
+
             }
 
             @Override
@@ -268,14 +347,23 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 ttSeekbar.setVisibility(View.INVISIBLE);
-                updateHelloChart();
+                progressBar.show();
+
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //progressBar.show();
+                        updateHelloChart();
+                    }
+                }).start();
                 //updateChartsRange();
             }
         });
 
         ttSeekbarEnd = (CardView) findViewById(R.id.ttSeekbarEnd);
 
-        calendar.setTime(TempSource.getAllPossibleDates().get(TempSource.getAllPossibleDates().size() - 1));
+        calendar.setTime(possibleDates.get(possibleDates.size() - 1));
         calendar.set(Calendar.HOUR_OF_DAY, 23);
         calendar.set(Calendar.MINUTE, 59);
         calendar.set(Calendar.MINUTE, 59);
@@ -304,7 +392,7 @@ public class MainActivity extends AppCompatActivity
                     // TODO do the same as done in sbTime
                 }
                 Calendar calendar = Calendar.getInstance();
-                calendar.setTime(TempSource.getAllPossibleDates().get(0));
+                calendar.setTime(possibleDates.get(0));
                 calendar.add(Calendar.DATE, i);
                 calendar.set(Calendar.HOUR_OF_DAY, 23);
                 calendar.set(Calendar.MINUTE, 59);
@@ -315,9 +403,33 @@ public class MainActivity extends AppCompatActivity
                 // Toast.makeText(getBaseContext(),"not allowed",Toast.LENGTH_LONG).show();
 
 
-                int x = seekBar.getThumb().getBounds().left;
-                //((TextView)ttSeekbarEnd.findViewById(R.id.ttSeekbarEndValue)).setText(i+":59");
-                ttSeekbarEnd.setX(x);
+                int width = seekBar.getWidth()
+                        - seekBar.getPaddingLeft()
+                        - seekBar.getPaddingRight();
+                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.JELLY_BEAN) {
+                    int x = seekBar.getThumb().getBounds().left;
+                    if(((double)x/width)>=0.9)
+                        x=(int)(width*0.90);
+                    ttSeekbarEnd.setX(x);
+                }
+                else
+                {
+
+                    int thumbPos = seekBar.getPaddingLeft()
+                            + width
+                            * seekBar.getProgress()
+                            / seekBar.getMax();
+
+                    if (thumbPos > width - 20) {
+                        thumbPos = width - 80;
+                    }
+                    CardView.LayoutParams layoutParams = new CardView.LayoutParams(
+                            CardView.LayoutParams.WRAP_CONTENT, CardView.LayoutParams.WRAP_CONTENT);
+                    layoutParams.setMargins(thumbPos - 20, 100, 0, 0);
+
+                    ttSeekbarEnd.setLayoutParams(layoutParams);
+                    ttSeekbarEnd.requestLayout();
+                }
 
             }
 
@@ -330,7 +442,15 @@ public class MainActivity extends AppCompatActivity
             public void onStopTrackingTouch(SeekBar seekBar) {
                 ttSeekbarEnd.setVisibility(View.INVISIBLE);
                 //updateChartsRange();
-                updateHelloChart();
+                progressBar.show();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        updateHelloChart();
+                    }
+                }).start();
+
             }
         });
 
@@ -338,17 +458,13 @@ public class MainActivity extends AppCompatActivity
 
     private void initControls() {
 
+
         sdf = new SimpleDateFormat("dd.MM.yyyy");
         tvHighestTemp = (TextView) findViewById(R.id.tvHighestTemp);
         tvLowestTemp = (TextView) findViewById(R.id.tvLowestTemp);
         tvAccTemp = (TextView) findViewById(R.id.tvAccTemp);
         tvYesterdayTemp = (TextView) findViewById(R.id.tvYesterdayTemp);
 
-        progressBar = new ProgressDialog(this);
-        progressBar.setCancelable(true);
-        progressBar.setMessage("Daten werden aktualisiert ...");
-        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        progressBar.setProgress(-1);
 
         helloChart = (lecho.lib.hellocharts.view.LineChartView) findViewById(R.id.helloLinechart);
         helloChart.setOnValueTouchListener(new LineChartOnValueSelectListener() {
@@ -405,7 +521,23 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        initSeekBars();
+        ib_zoom=(ImageButton)findViewById(R.id.ib_zoom);
+        ib_zoom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                helloController.zoomVertical();
+            }
+        });
+
+        ib_zoomOut=(ImageButton)findViewById(R.id.ib_zoom_out);
+        ib_zoomOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                helloController.zoomOutVertical();
+            }
+        });
+
+        //initSeekBars();
     }
 
     public void setSelectedPointCardText(Temperature acc) {
@@ -416,7 +548,7 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        ((TextView) findViewById(R.id.tvSelctedTemp)).setText(round(acc.getTemp(), 2) + "°C");
+        ((TextView) findViewById(R.id.tvSelctedTemp)).setText(round(acc.getTemp(), 1) + "°C");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         ((TextView) findViewById(R.id.tvSelctedTempTime)).setText(simpleDateFormat.format(acc.getTime()));
     }
@@ -474,6 +606,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
+
 
         } else if (id == R.id.nav_share) {
 

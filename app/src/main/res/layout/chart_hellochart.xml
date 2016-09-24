@@ -1,106 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 
-<android.support.v7.widget.CardView
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/card1"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="2dp"
     android:layout_column="0"
-    android:layout_row="1"
-    android:layout_columnSpan="2"
-    android:layout_rowSpan="1"
+    android:layout_margin="2dp"
     card_view:cardBackgroundColor="#FFFFFF"
     card_view:cardCornerRadius="2dp">
 
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-    <lecho.lib.hellocharts.view.LineChartView
-        xmlns:chart="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/helloLinechart"
-        android:layout_width="match_parent"
-        android:layout_gravity="bottom"
-        android:layout_height="230dp"
-        android:layout_marginTop="7dp"
-        android:paddingRight="0dp"
-        android:layout_marginLeft="7dp"
-        android:layout_marginRight="7dp"
-        android:layout_marginBottom="80dp"
-        android:background="#ffffff"
-        chart:chart_axisColor="#757575"
-        chart:chart_labelColor="#757575">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-    </lecho.lib.hellocharts.view.LineChartView>
 
-    <android.support.v7.widget.CardView
-        xmlns:card_view="http://schemas.android.com/apk/res-auto"
-        android:layout_width="75dp"
-        android:visibility="invisible"
+
+            <lecho.lib.hellocharts.view.LineChartView xmlns:chart="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/helloLinechart"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:layout_gravity="bottom"
+                android:layout_marginBottom="0dp"
+                android:layout_marginLeft="7dp"
+                android:layout_marginRight="7dp"
+                android:layout_marginTop="7dp"
+                android:background="#ffffff"
+                android:paddingRight="0dp"
+                chart:chart_axisColor="#757575"
+                chart:chart_labelColor="#757575">
+
+            </lecho.lib.hellocharts.view.LineChartView>
+            <ImageButton
+                android:layout_width="wrap_content"
+
+                android:id="@+id/ib_zoom"
+
+                android:layout_height="wrap_content"
+                android:src="@android:drawable/ic_menu_zoom"
+                android:tint="#757575"
+                android:layout_alignParentEnd="true"
+
+                android:layout_alignParentRight="true" />
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:id="@+id/ib_zoom_out"
+                android:layout_marginRight="50dp"
+                android:layout_height="wrap_content"
+                android:src="@android:drawable/ic_dialog_alert"
+                android:tint="#757575"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true" />
+        </RelativeLayout>
+
+
+
+        <SeekBar
+            android:id="@+id/sbTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginBottom="40dp"
+            android:layout_marginLeft="7dp"
+            android:layout_marginRight="7dp"
+            android:layout_marginTop="7dp"
+            android:maxHeight="2dp"
+            android:progress="20"
+            android:progressDrawable="@drawable/seekbar_mindate" />
+    </LinearLayout>
+
+
+    <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
         android:id="@+id/ttSeekbar"
+        android:layout_width="75dp"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        card_view:cardElevation="0dp"
-        card_view:cardCornerRadius="8dp"
+        android:layout_marginBottom="78dp"
+        android:visibility="invisible"
         card_view:cardBackgroundColor="#CCBDBDBD"
-        android:layout_marginBottom="78dp">
+        card_view:cardCornerRadius="8dp"
+        card_view:cardElevation="0dp">
 
         <TextView
             android:id="@+id/ttSeekbarValue"
             android:layout_width="75dp"
             android:layout_height="20dp"
-            android:textAlignment="center"
-            android:text=""/>
+            android:text=""
+            android:textAlignment="center" />
 
     </android.support.v7.widget.CardView>
 
-    <SeekBar
-        android:layout_width="match_parent"
-        android:id="@+id/sbTime"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:progress="20"
-        android:layout_marginTop="7dp"
-        android:layout_marginLeft="7dp"
-        android:layout_marginRight="7dp"
-        android:layout_marginBottom="40dp"/>
 
-    <android.support.v7.widget.CardView
-        xmlns:card_view="http://schemas.android.com/apk/res-auto"
-        android:layout_width="wrap_content"
-        android:visibility="invisible"
+    <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
         android:id="@+id/ttSeekbarEnd"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
-        card_view:cardElevation="0dp"
-        card_view:cardCornerRadius="8dp"
+        android:layout_marginBottom="40dp"
+        android:visibility="invisible"
         card_view:cardBackgroundColor="#CCBDBDBD"
-        android:layout_marginBottom="40dp">
+        card_view:cardCornerRadius="8dp"
+        card_view:cardElevation="0dp">
 
         <TextView
             android:id="@+id/ttSeekbarEndValue"
             android:layout_width="75dp"
             android:layout_height="20dp"
-            android:textAlignment="center"
-            android:text="23:59"/>
+            android:text="23:59"
+            android:textAlignment="center" />
 
     </android.support.v7.widget.CardView>
 
     <SeekBar
-        android:layout_width="match_parent"
         android:id="@+id/sbTimeEnd"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_marginTop="7dp"
-        android:rotation="0"
-        android:progress="30"
-        android:maxHeight="2dp"
-        android:progressDrawable="@drawable/seekbar_progress"
+        android:layout_marginBottom="7dp"
         android:layout_marginLeft="7dp"
         android:layout_marginRight="7dp"
-        android:layout_marginBottom="7dp"/>
-
+        android:layout_marginTop="7dp"
+        android:maxHeight="2dp"
+        android:progress="30"
+        android:progressDrawable="@drawable/seekbar_progress"
+        android:rotation="0" />
 
 
 </android.support.v7.widget.CardView>

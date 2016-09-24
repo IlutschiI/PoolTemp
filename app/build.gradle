@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.lukas.pooltemp"
-        minSdkVersion 21
+        minSdkVersion 10
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"

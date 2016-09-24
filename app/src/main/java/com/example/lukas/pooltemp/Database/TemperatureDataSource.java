@@ -90,7 +90,7 @@ public class TemperatureDataSource {
     }
 
     public List<java.util.Date> getAllPossibleDates(){
-        List<java.util.Date> result=new LinkedList<>();
+        /*List<java.util.Date> result=new LinkedList<>();
 
         List<Temperature> temps=getAllTemperatures();
         boolean contains=false;
@@ -123,7 +123,9 @@ public class TemperatureDataSource {
 
 
 
-        return result;
+        return result;*/
+
+        return generateDatebetween(getMinDate(),getMaxDate());
     }
 
     public void clearTable(){
@@ -205,10 +207,12 @@ public class TemperatureDataSource {
         Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_TEMP+" DESC", null);
 
         c.moveToFirst();
+        if(!c.isAfterLast()) {
+            Temperature t = new Temperature(round(c.getDouble(2), 1), new java.util.Date(c.getLong(1)), c.getLong(0));
+            return t;
+        }
 
-        Temperature t = new Temperature(c.getDouble(2),new java.util.Date(c.getLong(1)),c.getLong(0));
-
-        return t;
+        return null;
 
     }
 
@@ -219,7 +223,7 @@ public class TemperatureDataSource {
 
         c.moveToFirst();
 
-        Temperature t = new Temperature(c.getDouble(2),new java.util.Date(c.getLong(1)),c.getLong(0));
+        Temperature t = new Temperature(round(c.getDouble(2),1),new java.util.Date(c.getLong(1)),c.getLong(0));
 
         return t;
 
@@ -232,7 +236,7 @@ public class TemperatureDataSource {
 
         c.moveToFirst();
 
-        Temperature t = new Temperature(round(c.getDouble(2),2),new java.util.Date(c.getLong(1)),c.getLong(0));
+        Temperature t = new Temperature(round(c.getDouble(2),1),new java.util.Date(c.getLong(1)),c.getLong(0));
 
         return t;
 
@@ -279,7 +283,7 @@ public class TemperatureDataSource {
         c.moveToFirst();
         double result=c.getDouble(0);
 
-        return round(result,2);
+        return round(result,1);
     }
 
     private double round(double value, int places) {
@@ -288,5 +292,52 @@ public class TemperatureDataSource {
         BigDecimal bd = new BigDecimal(value);
         bd = bd.setScale(places, RoundingMode.HALF_UP);
         return bd.doubleValue();
+    }
+
+    public java.util.Date getMinDate(){
+        if(countEntries()==0)
+            return new java.util.Date(Long.MIN_VALUE);
+
+        open();
+        Cursor c = database.rawQuery("Select Min("+SQLiteDBHelper.COLUMN_Date+") from " + SQLiteDBHelper.TABLE_Temp, null);
+
+        c.moveToFirst();
+
+
+        return new java.util.Date(c.getLong(0));
+    }
+
+    public java.util.Date getMaxDate(){
+        if(countEntries()==0)
+            return new java.util.Date(Long.MIN_VALUE);
+
+        open();
+        Cursor c = database.rawQuery("Select Max("+SQLiteDBHelper.COLUMN_Date+") from " + SQLiteDBHelper.TABLE_Temp, null);
+
+        c.moveToFirst();
+
+
+        return new java.util.Date(c.getLong(0));
+    }
+
+    public List<java.util.Date>generateDatebetween(java.util.Date minDate, java.util.Date maxDate){
+        List<java.util.Date> dateList= new LinkedList<>();
+
+        Calendar calendar = new GregorianCalendar();
+        calendar.setTime(minDate);
+        calendar.set(Calendar.HOUR_OF_DAY,0);
+        calendar.set(Calendar.MINUTE,0);
+        calendar.set(Calendar.SECOND,0);
+
+        dateList.add(calendar.getTime());
+
+        while (calendar.getTime().getTime()<maxDate.getTime())
+        {
+            calendar.add(Calendar.DATE,1);
+            dateList.add(calendar.getTime());
+        }
+
+        dateList.remove(dateList.size()-1);
+        return dateList;
     }
 }
