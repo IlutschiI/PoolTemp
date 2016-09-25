@@ -21,9 +21,13 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <include
+    <LinearLayout
+        android:orientation="horizontal"
         android:id="@+id/contentPanel"
-        layout="@layout/content_main" />
+        android:layout_marginTop="?attr/actionBarSize"
+        layout="@layout/content_main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"

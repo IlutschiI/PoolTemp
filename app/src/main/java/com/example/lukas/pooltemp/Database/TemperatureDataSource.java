@@ -132,7 +132,6 @@ public class TemperatureDataSource {
         open();
         database.execSQL("Delete from "+SQLiteDBHelper.TABLE_Temp);
     }
-
     public List<Temperature> getTemps(java.util.Date startDate, java.util.Date endDate){
 
         List<Temperature> result=new LinkedList<>();

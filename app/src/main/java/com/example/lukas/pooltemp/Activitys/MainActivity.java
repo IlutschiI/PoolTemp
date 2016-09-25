@@ -7,8 +7,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.CardView;
 import android.view.MotionEvent;
 import android.view.View;
@@ -22,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewTreeObserver;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -78,10 +77,13 @@ public class MainActivity extends AppCompatActivity
     Date minDate;
     Date maxDate;
     boolean initSeekbars = false;
+    boolean fabEnabled=true;
+    boolean poolScreen=true;
     List<Date> possibleDates;
     ImageButton ib_zoom;
     ImageButton ib_zoomOut;
-
+    LinearLayout contentPanel;
+    SettingsActivity settingsActivity;
 
     List<Temperature> data;
 
@@ -91,7 +93,15 @@ public class MainActivity extends AppCompatActivity
         System.out.println("---------------------------------------System start----------------------------------");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        contentPanel=(LinearLayout) findViewById(R.id.contentPanel);
+        contentPanel.addView(getLayoutInflater().inflate(R.layout.content_main,null));
+
         instance = this;
+
+        settingsActivity=new SettingsActivity(instance);
+        settingsActivity.updateSettings();
+
+
         TempSource = TemperatureDataSource.getInstance(this);
         if (TempSource.countEntries() != 0) {
             //RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
@@ -123,7 +133,6 @@ public class MainActivity extends AppCompatActivity
 
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-
         setSupportActionBar(toolbar);
 
 
@@ -190,7 +199,6 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
     }
 
 
@@ -504,6 +512,11 @@ public class MainActivity extends AppCompatActivity
                     fab.hide();
                 } else
                     fab.show();
+
+                if(!fabEnabled)
+                {
+                    fab.hide();
+                }
             }
         });
 
@@ -520,6 +533,7 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+
 
         ib_zoom=(ImageButton)findViewById(R.id.ib_zoom);
         ib_zoom.setOnClickListener(new View.OnClickListener() {
@@ -556,11 +570,23 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
+        } else if(!poolScreen) {
+            navigationView.getMenu().getItem(0).setChecked(true);
+            fabEnabled=true;
+            poolScreen=true;
+            fab.show();
+            contentPanel.removeAllViews();
+            contentPanel.addView(getLayoutInflater().inflate(R.layout.content_main,null));
+            initSeekbars=!initSeekbars;
+            initControls();
+            helloController.setChart(helloChart);
+            updateHelloChart();
         }
+        else
+            super.onBackPressed();
     }
 
     @Override
@@ -597,16 +623,31 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
+        item.setChecked(true);
         int id = item.getItemId();
 
         if (id == R.id.nav_camera) {
+            fabEnabled=true;
+            poolScreen=true;
+            fab.show();
+            contentPanel.removeAllViews();
+            contentPanel.addView(getLayoutInflater().inflate(R.layout.content_main,null));
+            initSeekbars=!initSeekbars;
+            initControls();
+            helloController.setChart(helloChart);
+            updateHelloChart();
             // Handle the camera action
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
-
+            poolScreen=false;
+            fabEnabled=false;
+            fab.hide();
+            contentPanel.removeAllViews();
+            contentPanel.addView(getLayoutInflater().inflate(R.layout.settings_layout,null));
+            settingsActivity.initControls();
 
         } else if (id == R.id.nav_share) {
 

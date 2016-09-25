@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_marginTop="10dp"
+
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Pool Settings"
+                android:textSize="25sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_marginBottom="2dp"
+                android:background="?android:attr/listDivider"/>
+
+            <Switch
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:targetApi="ice_cream_sandwich"
+                android:layout_marginBottom="10dp"
+                android:text="geglättete Kurven im Diagramm"
+                android:checked="false"
+                android:id="@+id/swCubicCurve" />
+
+            <Switch
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:targetApi="ice_cream_sandwich"
+                android:layout_marginBottom="10dp"
+                android:text="X-Achse anzeigen"
+                android:checked="false"
+                android:id="@+id/swXAxis" />
+
+            <Switch
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:targetApi="ice_cream_sandwich"
+                android:layout_marginBottom="10dp"
+                android:text="Y-Achse anzeigen"
+                android:checked="false"
+                android:id="@+id/swYAxis" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Zoom Multiplikator"
+                    android:textColor="#000000"/>
+                <SeekBar
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.5"
+                    android:max="5"
+
+                    android:progress="0"
+                    android:indeterminate="false"
+                    android:id="@+id/sbZoomMultiplier" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.1"
+                    android:id="@+id/tvZoomMultiplier" />
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+
+    </ScrollView>
+
+</LinearLayout>
