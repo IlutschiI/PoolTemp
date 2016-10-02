@@ -9,15 +9,19 @@ public class PoolSettings {
     public static String XAXIS_ENABLED="xAxisEnabled";
     public static String YAXIS_ENABLED="yAxisEnabled";
     public static String ZOOMING_MULTIPLIER="zoomingMultiplier";
+    public static String NUMBER_OF_POINTS="numberOfPoints";
 
 
     boolean cubicCurves=true;
     float zoomingMultiplier;
     boolean xAxisEnabled=true;
     boolean yAxisEnabled=true;
+    int numberOfPoints;
 
     public PoolSettings() {
     }
+
+
 
     public PoolSettings(boolean cubicCurves, int zoomingMultiplier, boolean xAxisEnabled, boolean yAxisEnabled) {
         this.cubicCurves = cubicCurves;
@@ -57,5 +61,13 @@ public class PoolSettings {
 
     public void setyAxisEnabled(boolean yAxisEnabled) {
         this.yAxisEnabled = yAxisEnabled;
+    }
+
+    public int getNumberOfPoints() {
+        return numberOfPoints;
+    }
+
+    public void setNumberOfPoints(int numberOfPoints) {
+        this.numberOfPoints = numberOfPoints;
     }
 }

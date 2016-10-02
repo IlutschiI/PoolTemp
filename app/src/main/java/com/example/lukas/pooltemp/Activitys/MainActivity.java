@@ -34,6 +34,7 @@ import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Model.Temperature;
 import com.example.lukas.pooltemp.R;
 import com.example.lukas.pooltemp.RESTController.RestController;
+import com.example.lukas.pooltemp.Settings.Settings;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -42,6 +43,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import lecho.lib.hellocharts.listener.LineChartOnValueSelectListener;
 import lecho.lib.hellocharts.model.PointValue;
@@ -100,6 +102,8 @@ public class MainActivity extends AppCompatActivity
 
         settingsActivity=new SettingsActivity(instance);
         settingsActivity.updateSettings();
+        if(Settings.getInstance().getPoolSettings().getNumberOfPoints()==0)
+            Settings.getInstance().getPoolSettings().setNumberOfPoints(100);
 
 
         TempSource = TemperatureDataSource.getInstance(this);
@@ -117,7 +121,13 @@ public class MainActivity extends AppCompatActivity
         progressBar.setMessage("Daten werden aktualisiert ...");
         progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressBar.setProgress(-1);
-        progressBar.show();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                progressBar.show();
+            }
+        });
+
 
         new Thread(new Runnable() {
             @Override
@@ -125,7 +135,13 @@ public class MainActivity extends AppCompatActivity
                 initControls();
 
                 helloController = new HelloChartController(instance, helloChart);
-                helloController.setData(TempSource.getAllTemperatures());
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        helloController.setData(TempSource.getAllTemperatures());
+                    }
+                });
+
                 updateHelloChart();
                 progressBar.dismiss();
             }
@@ -203,14 +219,20 @@ public class MainActivity extends AppCompatActivity
 
 
     public void updateHelloChart() {
-        setInfoCardText();
-        if (!initSeekbars)
-            initSeekBars();
-        possibleDates = TempSource.getAllPossibleDates();
-        helloController.setStartEndOfData(minDate, maxDate);
-        progressBar.dismiss();
-        setFabEnabled(true);
-        System.out.println("----------------------------System running--------------------------");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setInfoCardText();
+                if (!initSeekbars)
+                    initSeekBars();
+                possibleDates = TempSource.getAllPossibleDates();
+                helloController.setStartEndOfData(minDate, maxDate);
+                progressBar.dismiss();
+                setFabEnabled(true);
+                System.out.println("----------------------------System running--------------------------");
+            }
+        });
+
     }
 
     /*
@@ -355,7 +377,13 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 ttSeekbar.setVisibility(View.INVISIBLE);
-                progressBar.show();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressBar.show();
+                    }
+                });
+
 
 
                 new Thread(new Runnable() {
@@ -450,14 +478,15 @@ public class MainActivity extends AppCompatActivity
             public void onStopTrackingTouch(SeekBar seekBar) {
                 ttSeekbarEnd.setVisibility(View.INVISIBLE);
                 //updateChartsRange();
-                progressBar.show();
-                new Thread(new Runnable() {
+                runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-
+                        progressBar.show();
                         updateHelloChart();
                     }
-                }).start();
+                });
+
+
 
             }
         });
@@ -658,6 +687,11 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public void refreshPossibleDates(){
+        possibleDates = TempSource.getAllPossibleDates();
+        initSeekBars();
     }
 
     private double round(double value, int places) {

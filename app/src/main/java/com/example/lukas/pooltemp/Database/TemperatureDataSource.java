@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.widget.Toast;
 
 import com.example.lukas.pooltemp.Model.Temperature;
+import com.example.lukas.pooltemp.Settings.Settings;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -162,7 +163,8 @@ public class TemperatureDataSource {
         Temperature temp1;
         Temperature temp2;
         List<Temperature> minimizedList= new LinkedList<>();
-        while (result.size()>=100)
+        int numberPoints=Settings.getInstance().getPoolSettings().getNumberOfPoints();
+        while (result.size()>= numberPoints)
         {
             minimizedList= new LinkedList<>();
             for (int i = 0;i<result.size();i=i+2){
@@ -330,12 +332,10 @@ public class TemperatureDataSource {
 
         dateList.add(calendar.getTime());
 
-        while (calendar.getTime().getTime()<maxDate.getTime())
-        {
-            calendar.add(Calendar.DATE,1);
+        while (calendar.getTime().getTime()<maxDate.getTime()) {
+            calendar.add(Calendar.DATE, 1);
             dateList.add(calendar.getTime());
         }
-
         dateList.remove(dateList.size()-1);
         return dateList;
     }

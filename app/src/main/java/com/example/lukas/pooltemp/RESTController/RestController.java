@@ -71,6 +71,7 @@ public class RestController {
 
                 }
                 // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
+                c.refreshPossibleDates();
                 c.updateHelloChart();
 
 
@@ -128,7 +129,9 @@ public class RestController {
 
                 }
                 // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
+                c.refreshPossibleDates();
                 c.updateHelloChart();
+
 
 
             }
@@ -195,6 +198,7 @@ public class RestController {
             public void onErrorResponse(VolleyError error) {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
+                c.refreshPossibleDates();
                 c.updateHelloChart();
             }
         });
@@ -244,6 +248,7 @@ public class RestController {
 
                 }
                  Toast.makeText(c,"Daten wurde über WIFI abgerufen",Toast.LENGTH_LONG).show();
+                c.refreshPossibleDates();
                 c.updateHelloChart();
 
 

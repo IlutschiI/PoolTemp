@@ -44,7 +44,7 @@
                 android:id="@+id/ib_zoom"
 
                 android:layout_height="wrap_content"
-                android:src="@android:drawable/ic_menu_zoom"
+                android:src="@drawable/ic_zoom_in"
                 android:tint="#757575"
                 android:layout_alignParentEnd="true"
 
@@ -55,7 +55,7 @@
                 android:id="@+id/ib_zoom_out"
                 android:layout_marginRight="50dp"
                 android:layout_height="wrap_content"
-                android:src="@android:drawable/ic_dialog_alert"
+                android:src="@drawable/ic_zoom_out"
                 android:tint="#757575"
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentRight="true" />
