@@ -26,6 +26,7 @@ import java.util.List;
  */
 public class TemperatureDataSource {
 
+    static  int count=0;
     private SQLiteDatabase database;
     private SQLiteDBHelper dbHelper;
     private String[] allColumns = {SQLiteDBHelper.COLUMN_ID,SQLiteDBHelper.COLUMN_TEMP,SQLiteDBHelper.COLUMN_Date};
@@ -53,7 +54,8 @@ public class TemperatureDataSource {
     }
 
     public Temperature insertTemperature(Temperature temp){
-
+        count++;
+        System.out.println(count);
         ContentValues values = new ContentValues();
         values.put(SQLiteDBHelper.COLUMN_Date, temp.getTime().getTime());
         values.put(SQLiteDBHelper.COLUMN_TEMP, temp.getTemp());
@@ -61,7 +63,10 @@ public class TemperatureDataSource {
         long rowId=database.insert(SQLiteDBHelper.TABLE_Temp,null,values);
         Cursor c = database.rawQuery("Select * from "+SQLiteDBHelper.TABLE_Temp+" where ROWID="+String.valueOf(rowId),null);
         c.moveToFirst();
+
         temp.setId(c.getLong(0));
+        c.close();
+        close();
 
 
         return temp;
@@ -86,7 +91,7 @@ public class TemperatureDataSource {
         }
         t = new Temperature(c.getDouble(2), new java.util.Date(c.getLong(1)),c.getLong(0));
         temps.add(t);
-
+        close();
         return temps;
     }
 
@@ -132,6 +137,7 @@ public class TemperatureDataSource {
     public void clearTable(){
         open();
         database.execSQL("Delete from "+SQLiteDBHelper.TABLE_Temp);
+        close();
     }
     public List<Temperature> getTemps(java.util.Date startDate, java.util.Date endDate){
 
@@ -199,7 +205,9 @@ public class TemperatureDataSource {
         open();
         Cursor c = database.rawQuery("Select count(*) from "+SQLiteDBHelper.TABLE_Temp,null);
         c.moveToFirst();
-        return c.getInt(0);
+        int ret=c.getInt(0);
+        close();
+        return ret;
     }
 
     public Temperature getHighestTemperature(){
@@ -210,9 +218,10 @@ public class TemperatureDataSource {
         c.moveToFirst();
         if(!c.isAfterLast()) {
             Temperature t = new Temperature(round(c.getDouble(2), 1), new java.util.Date(c.getLong(1)), c.getLong(0));
+            close();
             return t;
         }
-
+        close();
         return null;
 
     }
@@ -226,6 +235,7 @@ public class TemperatureDataSource {
 
         Temperature t = new Temperature(round(c.getDouble(2),1),new java.util.Date(c.getLong(1)),c.getLong(0));
 
+        close();
         return t;
 
     }
@@ -239,6 +249,7 @@ public class TemperatureDataSource {
 
         Temperature t = new Temperature(round(c.getDouble(2),1),new java.util.Date(c.getLong(1)),c.getLong(0));
 
+        close();
         return t;
 
     }
@@ -262,6 +273,7 @@ public class TemperatureDataSource {
 
     public double getAverageOfYesterday(){
 
+        open();
         Calendar calendar=GregorianCalendar.getInstance();
         calendar.add(Calendar.DATE,-1);
         calendar.set(Calendar.HOUR_OF_DAY,0);
@@ -283,7 +295,7 @@ public class TemperatureDataSource {
 
         c.moveToFirst();
         double result=c.getDouble(0);
-
+        close();
         return round(result,1);
     }
 
@@ -304,8 +316,9 @@ public class TemperatureDataSource {
 
         c.moveToFirst();
 
-
-        return new java.util.Date(c.getLong(0));
+        long ret=c.getLong(0);
+        close();
+        return new java.util.Date(ret);
     }
 
     public java.util.Date getMaxDate(){
@@ -316,9 +329,9 @@ public class TemperatureDataSource {
         Cursor c = database.rawQuery("Select Max("+SQLiteDBHelper.COLUMN_Date+") from " + SQLiteDBHelper.TABLE_Temp, null);
 
         c.moveToFirst();
-
-
-        return new java.util.Date(c.getLong(0));
+        long ret=c.getLong(0);
+        close();
+        return new java.util.Date(ret);
     }
 
     public List<java.util.Date>generateDatebetween(java.util.Date minDate, java.util.Date maxDate){

@@ -109,8 +109,14 @@ public class MainActivity extends AppCompatActivity
         TempSource = TemperatureDataSource.getInstance(this);
         if (TempSource.countEntries() != 0) {
             //RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
-        } else
+        } else {
             RestController.getAllTemps(instance);
+            try {
+                Thread.currentThread().sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!before all Dates");
         possibleDates = TempSource.getAllPossibleDates();
