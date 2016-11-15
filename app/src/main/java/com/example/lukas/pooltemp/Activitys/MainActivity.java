@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,9 +19,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -72,7 +75,6 @@ public class MainActivity extends AppCompatActivity
     SeekBar sbTime;
     CardView ttSeekbarEnd;
     SeekBar sbTimeEnd;
-    ProgressDialog progressBar;
     TextView tvYesterdayTemp;
     lecho.lib.hellocharts.view.LineChartView helloChart;
     HelloChartController helloController;
@@ -86,6 +88,9 @@ public class MainActivity extends AppCompatActivity
     ImageButton ib_zoomOut;
     LinearLayout contentPanel;
     SettingsActivity settingsActivity;
+    ProgressBar progress;
+    AlertDialog progressDialog;
+    TextView progressText;
 
     List<Temperature> data;
 
@@ -122,15 +127,28 @@ public class MainActivity extends AppCompatActivity
         possibleDates = TempSource.getAllPossibleDates();
         System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!after all Dates");
 
-        progressBar = new ProgressDialog(this);
-        progressBar.setCancelable(false);
-        progressBar.setMessage("Daten werden aktualisiert ...");
-        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        progressBar.setProgress(-1);
+
+        progressDialog=new AlertDialog.Builder(this).setTitle("Bitte warten")
+                .setView(R.layout.progress_dialog_progress)
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+
+
+
+        progress=(ProgressBar) progressDialog.findViewById(R.id.pbProgressDialogProgress);
+        progressText=(TextView) progressDialog.findViewById(R.id.tvProgressDialogProgress);
+        progress.setMax(11);
+        progress.setIndeterminate(false);
+
+        progress.setProgress(10);
+        progress.setProgress(0);
+        progressDialog.dismiss();
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                progressBar.show();
+                progressDialog.show();
             }
         });
 
@@ -149,7 +167,7 @@ public class MainActivity extends AppCompatActivity
                 });
 
                 updateHelloChart();
-                progressBar.dismiss();
+                progressDialog.dismiss();
             }
         }).start();
 
@@ -233,7 +251,7 @@ public class MainActivity extends AppCompatActivity
                     initSeekBars();
                 possibleDates = TempSource.getAllPossibleDates();
                 helloController.setStartEndOfData(minDate, maxDate);
-                progressBar.dismiss();
+                progressDialog.dismiss();
                 setFabEnabled(true);
                 System.out.println("----------------------------System running--------------------------");
             }
@@ -386,16 +404,15 @@ public class MainActivity extends AppCompatActivity
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        progressBar.show();
+                        progressDialog.show();
                     }
                 });
 
 
 
                 new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //progressBar.show();
+                        @Override
+                        public void run() {
                         updateHelloChart();
                     }
                 }).start();
@@ -487,7 +504,7 @@ public class MainActivity extends AppCompatActivity
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        progressBar.show();
+                        progressDialog.show();
                         updateHelloChart();
                     }
                 });
@@ -563,7 +580,8 @@ public class MainActivity extends AppCompatActivity
                 //if (!controller.isanimating())
                 //   controller.addPoint(new Point("", 25));
                 fab.setEnabled(false);
-                progressBar.show();
+                progressDialog.show();
+
                 RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
 
             }
@@ -587,6 +605,20 @@ public class MainActivity extends AppCompatActivity
         });
 
         //initSeekBars();
+    }
+
+    public void updateProgress(final int max,final int prog){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(prog!=progress.getMax())
+                    progress.setMax(max);
+                progress.setProgress(prog);
+
+                progressText.setText(prog+"/"+max);
+            }
+        });
+
     }
 
     public void setSelectedPointCardText(Temperature acc) {
@@ -640,13 +672,13 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_reload) {
-            progressBar.show();
+            progressDialog.show();
             RestController.getAllTemps(instance);
             return true;
         }
 
         if (id == R.id.action_forceTemperature) {
-            progressBar.show();
+            progressDialog.show();
             RestController.forceNewTemperature(instance);
             return true;
         }
