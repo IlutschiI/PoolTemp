@@ -67,7 +67,7 @@ public class RestController {
                                 time=sdf.parse(jsonObject.getString("time").substring(0,19));
                                 temperature=new Temperature(temp,time);
                                 temperatureDataSource.insertTemperature(temperature);
-                                c.updateProgress(response.length(),i);
+                                c.updateProgress(response.length(),i-1);
 
 
                             }
@@ -80,6 +80,7 @@ public class RestController {
                         // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
                         c.refreshPossibleDates();
                         c.updateHelloChart();
+                        c.resetProgress();
                     }
                 }).start();
 
@@ -132,7 +133,7 @@ public class RestController {
                                 time=sdf.parse(jsonObject.getString("time").substring(0,19));
                                 temperature=new Temperature(temp,time);
                                 temperatureDataSource.insertTemperature(temperature);
-                                c.updateProgress(response.length(),i);
+                                c.updateProgress(response.length(),i-1);
 
 
                             }
@@ -145,6 +146,7 @@ public class RestController {
                         // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
                         c.refreshPossibleDates();
                         c.updateHelloChart();
+                        c.resetProgress();
                     }
                 }).start();
 

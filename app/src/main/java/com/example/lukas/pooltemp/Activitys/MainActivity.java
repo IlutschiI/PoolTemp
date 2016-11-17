@@ -621,6 +621,17 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    public void resetProgress(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                progress.setProgress(0);
+                progressText.setText("--/--");
+            }
+        });
+
+    }
+
     public void setSelectedPointCardText(Temperature acc) {
 
         if (acc == null) {
