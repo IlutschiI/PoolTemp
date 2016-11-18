@@ -1,12 +1,15 @@
 package com.example.lukas.pooltemp.Activitys;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.view.MotionEvent;
@@ -34,6 +37,8 @@ import com.example.lukas.pooltemp.Adapter.LockableScrollView;
 import com.example.lukas.pooltemp.Adapter.StartDateSpinnerAdapter;
 import com.example.lukas.pooltemp.Controller.HelloChartController;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
+import com.example.lukas.pooltemp.Fragments.PoolTempFragment;
+import com.example.lukas.pooltemp.Fragments.SettingsFragment;
 import com.example.lukas.pooltemp.Model.Temperature;
 import com.example.lukas.pooltemp.R;
 import com.example.lukas.pooltemp.RESTController.RestController;
@@ -56,43 +61,29 @@ public class MainActivity extends AppCompatActivity
 
     float[] dataFloat;
     Tooltip tip;
-    FloatingActionButton fab;
-    LockableScrollView scrollView;
     Spinner startDateSpinner;
     Spinner endDateSpinner;
     TemperatureDataSource TempSource;
-    SimpleDateFormat sdf;
+
     boolean startDateSpinnerInitialized = false;
     boolean endDateSpinnerInitialized = false;
-    boolean isScrollable = true;
+
     StartDateSpinnerAdapter startDateSpinnerAdapter;
     EndDateSpinnerAdapter endDateSpinnerAdapter;
-    MainActivity instance;
-    TextView tvHighestTemp;
-    TextView tvLowestTemp;
-    TextView tvAccTemp;
-    CardView ttSeekbar;
-    SeekBar sbTime;
-    CardView ttSeekbarEnd;
-    SeekBar sbTimeEnd;
-    TextView tvYesterdayTemp;
-    lecho.lib.hellocharts.view.LineChartView helloChart;
-    HelloChartController helloController;
-    Date minDate;
-    Date maxDate;
-    boolean initSeekbars = false;
-    boolean fabEnabled=true;
+    public static MainActivity instance;
     boolean poolScreen=true;
     List<Date> possibleDates;
-    ImageButton ib_zoom;
-    ImageButton ib_zoomOut;
-    LinearLayout contentPanel;
+    //LinearLayout contentPanel;
     SettingsActivity settingsActivity;
     ProgressBar progress;
     AlertDialog progressDialog;
     TextView progressText;
-
     List<Temperature> data;
+
+    FragmentManager fm;
+
+
+    PoolTempFragment poolFragment;
 
 
     @Override
@@ -100,10 +91,17 @@ public class MainActivity extends AppCompatActivity
         System.out.println("---------------------------------------System start----------------------------------");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        contentPanel=(LinearLayout) findViewById(R.id.contentPanel);
-        contentPanel.addView(getLayoutInflater().inflate(R.layout.content_main,null));
+        //contentPanel=(LinearLayout) findViewById(R.id.contentPanel);
+        //contentPanel.addView(getLayoutInflater().inflate(R.layout.content_main,null));
+
+        poolFragment=new PoolTempFragment();
+        fm = getSupportFragmentManager();
+        FragmentTransaction fs=fm.beginTransaction();
+        fs.replace(R.id.fragmentFrame,poolFragment);
 
         instance = this;
+
+
 
         settingsActivity=new SettingsActivity(instance);
         settingsActivity.updateSettings();
@@ -115,7 +113,7 @@ public class MainActivity extends AppCompatActivity
         if (TempSource.countEntries() != 0) {
             //RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
         } else {
-            RestController.getAllTemps(instance);
+            RestController.getAllTemps(instance,poolFragment);
             try {
                 Thread.currentThread().sleep(10000);
             } catch (InterruptedException e) {
@@ -153,23 +151,7 @@ public class MainActivity extends AppCompatActivity
         });
 
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                initControls();
 
-                helloController = new HelloChartController(instance, helloChart);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        helloController.setData(TempSource.getAllTemperatures());
-                    }
-                });
-
-                updateHelloChart();
-                progressDialog.dismiss();
-            }
-        }).start();
 
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -209,7 +191,7 @@ public class MainActivity extends AppCompatActivity
                 .setDotsColor(Color.CYAN);
         //controller.addLine(line);
         //controller.showChart();
-*/
+
         //Scrollview
         //Der FAB wird, wenn hinutergescrolled wird, ausgeblendet
 
@@ -229,7 +211,7 @@ public class MainActivity extends AppCompatActivity
         }
 
 
-
+*/
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -242,370 +224,11 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    public void updateHelloChart() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                setInfoCardText();
-                if (!initSeekbars)
-                    initSeekBars();
-                possibleDates = TempSource.getAllPossibleDates();
-                helloController.setStartEndOfData(minDate, maxDate);
-                progressDialog.dismiss();
-                setFabEnabled(true);
-                System.out.println("----------------------------System running--------------------------");
-            }
-        });
 
-    }
 
-    /*
-        Fab wird Enabled bzw. Disabled und die Farbe wird dementsprechend geändert
-     */
-    public void setFabEnabled(final boolean b) {
-        Handler mainHandler = new Handler(getMainLooper());
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                fab.setEnabled(b);
-                if (b) {
 
 
-                    //fab.setBackgroundColor(Color.parseColor("#FF4081"));
-                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FF4081")));
 
-                } else
-                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#93264B")));
-            }
-        });
-        //int alpha = background.getAlpha();
-
-
-    }
-
-    public void setInfoCardText() {
-
-        Handler mainHandler = new Handler(getMainLooper());
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    tvHighestTemp.setText("" + TempSource.getHighestTemperature().getTemp() + "°C");
-                } catch (Exception e) {
-                    tvHighestTemp.setText("N/A");
-                }
-
-                try {
-                    tvLowestTemp.setText("" + TempSource.getLowestTemperature().getTemp() + "°C");
-                } catch (Exception e) {
-                    tvLowestTemp.setText("N/A");
-                }
-
-                try {
-                    tvAccTemp.setText("" + TempSource.getActualTemperature().getTemp() + "°C");
-                } catch (Exception e) {
-                    tvAccTemp.setText("N/A");
-                }
-                try {
-                    tvYesterdayTemp.setText("" + TempSource.getAverageOfYesterday() + "°C");
-                } catch (Exception e) {
-                    tvYesterdayTemp.setText("N/A");
-                }
-            }
-        });
-
-
-    }
-
-    public void initSeekBars() {
-        initSeekbars = true;
-        ttSeekbar = (CardView) findViewById(R.id.ttSeekbar);
-        sbTime = (SeekBar) findViewById(R.id.sbTime);
-
-        sbTime.setMax(TempSource.getDateRange());
-        sbTime.incrementProgressBy(1);
-        sbTime.setProgress(0);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(possibleDates.get(0));
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        minDate = calendar.getTime();
-        ((TextView) ttSeekbar.findViewById(R.id.ttSeekbarValue)).setText(sdf.format(calendar.getTime()));
-
-        sbTime.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == motionEvent.ACTION_DOWN)
-                    ttSeekbar.setVisibility(View.VISIBLE);
-                else if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL)
-                    ttSeekbar.setVisibility(View.INVISIBLE);
-
-
-                return false;
-            }
-        });
-        sbTime.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                if (i > sbTimeEnd.getProgress()) {
-                    seekBar.setProgress(i - 1);
-                    return;
-                    // Toast.makeText(getBaseContext(),"not allowed",Toast.LENGTH_LONG).show();
-                }
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(possibleDates.get(0));
-                calendar.add(Calendar.DATE, i);
-                calendar.set(Calendar.HOUR_OF_DAY, 0);
-                calendar.set(Calendar.MINUTE, 0);
-                calendar.set(Calendar.MINUTE, 0);
-                minDate = calendar.getTime();
-
-
-                ((TextView) ttSeekbar.findViewById(R.id.ttSeekbarValue)).setText(sdf.format(calendar.getTime()));
-                int width = seekBar.getWidth()
-                        - seekBar.getPaddingLeft()
-                        - seekBar.getPaddingRight();
-                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.JELLY_BEAN) {
-                    int x = seekBar.getThumb().getBounds().left;
-                    if(((double)x/width)>=0.9)
-                    x=(int)(width*0.90);
-                    ttSeekbar.setX(x);
-                }
-                else
-                {
-
-                    int thumbPos = seekBar.getPaddingLeft()
-                            + width
-                            * seekBar.getProgress()
-                            / seekBar.getMax();
-
-                    if (thumbPos > width - 20) {
-                        thumbPos = width - 80;
-                    }
-                    CardView.LayoutParams layoutParams = new CardView.LayoutParams(
-                            CardView.LayoutParams.WRAP_CONTENT, CardView.LayoutParams.WRAP_CONTENT);
-                    layoutParams.setMargins(thumbPos - 20, 100, 0, 0);
-
-                    ttSeekbar.setLayoutParams(layoutParams);
-                    ttSeekbar.requestLayout();
-                }
-
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                ttSeekbar.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                ttSeekbar.setVisibility(View.INVISIBLE);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        progressDialog.show();
-                    }
-                });
-
-
-
-                new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                        updateHelloChart();
-                    }
-                }).start();
-                //updateChartsRange();
-            }
-        });
-
-        ttSeekbarEnd = (CardView) findViewById(R.id.ttSeekbarEnd);
-
-        calendar.setTime(possibleDates.get(possibleDates.size() - 1));
-        calendar.set(Calendar.HOUR_OF_DAY, 23);
-        calendar.set(Calendar.MINUTE, 59);
-        calendar.set(Calendar.MINUTE, 59);
-        maxDate = calendar.getTime();
-        ((TextView) ttSeekbarEnd.findViewById(R.id.ttSeekbarEndValue)).setText(sdf.format(calendar.getTime()));
-        sbTimeEnd = (SeekBar) findViewById(R.id.sbTimeEnd);
-        sbTimeEnd.setMax(TempSource.getDateRange());
-        sbTimeEnd.incrementProgressBy(1);
-        sbTimeEnd.setProgress(TempSource.getDateRange());
-        sbTimeEnd.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == motionEvent.ACTION_DOWN)
-                    ttSeekbarEnd.setVisibility(View.VISIBLE);
-                else if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL)
-                    ttSeekbarEnd.setVisibility(View.INVISIBLE);
-                return false;
-            }
-        });
-        sbTimeEnd.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                if (i < sbTime.getProgress()) {
-                    seekBar.setProgress(i + 1);
-                    return;
-                    // TODO do the same as done in sbTime
-                }
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(possibleDates.get(0));
-                calendar.add(Calendar.DATE, i);
-                calendar.set(Calendar.HOUR_OF_DAY, 23);
-                calendar.set(Calendar.MINUTE, 59);
-                calendar.set(Calendar.MINUTE, 59);
-                maxDate = calendar.getTime();
-                ((TextView) ttSeekbarEnd.findViewById(R.id.ttSeekbarEndValue)).setText(sdf.format(calendar.getTime()));
-
-                // Toast.makeText(getBaseContext(),"not allowed",Toast.LENGTH_LONG).show();
-
-
-                int width = seekBar.getWidth()
-                        - seekBar.getPaddingLeft()
-                        - seekBar.getPaddingRight();
-                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.JELLY_BEAN) {
-                    int x = seekBar.getThumb().getBounds().left;
-                    if(((double)x/width)>=0.9)
-                        x=(int)(width*0.90);
-                    ttSeekbarEnd.setX(x);
-                }
-                else
-                {
-
-                    int thumbPos = seekBar.getPaddingLeft()
-                            + width
-                            * seekBar.getProgress()
-                            / seekBar.getMax();
-
-                    if (thumbPos > width - 20) {
-                        thumbPos = width - 80;
-                    }
-                    CardView.LayoutParams layoutParams = new CardView.LayoutParams(
-                            CardView.LayoutParams.WRAP_CONTENT, CardView.LayoutParams.WRAP_CONTENT);
-                    layoutParams.setMargins(thumbPos - 20, 100, 0, 0);
-
-                    ttSeekbarEnd.setLayoutParams(layoutParams);
-                    ttSeekbarEnd.requestLayout();
-                }
-
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                ttSeekbarEnd.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                ttSeekbarEnd.setVisibility(View.INVISIBLE);
-                //updateChartsRange();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        progressDialog.show();
-                        updateHelloChart();
-                    }
-                });
-
-
-
-            }
-        });
-
-    }
-
-    private void initControls() {
-
-
-        sdf = new SimpleDateFormat("dd.MM.yyyy");
-        tvHighestTemp = (TextView) findViewById(R.id.tvHighestTemp);
-        tvLowestTemp = (TextView) findViewById(R.id.tvLowestTemp);
-        tvAccTemp = (TextView) findViewById(R.id.tvAccTemp);
-        tvYesterdayTemp = (TextView) findViewById(R.id.tvYesterdayTemp);
-
-
-        helloChart = (lecho.lib.hellocharts.view.LineChartView) findViewById(R.id.helloLinechart);
-        helloChart.setOnValueTouchListener(new LineChartOnValueSelectListener() {
-            @Override
-            public void onValueSelected(int lineIndex, int pointIndex, PointValue value) {
-                Temperature accTemp = new Temperature(value.getY(), new Date((long) value.getX()));
-                setSelectedPointCardText(accTemp);
-            }
-
-            @Override
-            public void onValueDeselected() {
-
-            }
-        });
-
-
-        helloChart.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL || motionEvent.getAction() != MotionEvent.ACTION_UP)
-                    isScrollable = false;
-                else
-                    isScrollable = true;
-                scrollView.setScrollable(isScrollable);
-                return false;
-            }
-        });
-
-
-        scrollView = ((LockableScrollView) findViewById(R.id.scrollview));
-        scrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
-            @Override
-            public void onScrollChanged() {
-                int i = scrollView.getScrollY();
-
-                if (i >= 130) {
-                    fab.hide();
-                } else
-                    fab.show();
-
-                if(!fabEnabled)
-                {
-                    fab.hide();
-                }
-            }
-        });
-
-
-        fab = (FloatingActionButton) findViewById(R.id.fab);    //FloatingActionButton
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {                      //Onclicklistener des FloatingActionButtons
-                //if (!controller.isanimating())
-                //   controller.addPoint(new Point("", 25));
-                fab.setEnabled(false);
-                progressDialog.show();
-
-                RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
-
-            }
-        });
-
-
-        ib_zoom=(ImageButton)findViewById(R.id.ib_zoom);
-        ib_zoom.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                helloController.zoomVertical();
-            }
-        });
-
-        ib_zoomOut=(ImageButton)findViewById(R.id.ib_zoom_out);
-        ib_zoomOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                helloController.zoomOutVertical();
-            }
-        });
-
-        //initSeekBars();
-    }
 
     public void updateProgress(final int max,final int prog){
         runOnUiThread(new Runnable() {
@@ -632,18 +255,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    public void setSelectedPointCardText(Temperature acc) {
 
-        if (acc == null) {
-            ((TextView) findViewById(R.id.tvSelctedTemp)).setText("N/A");
-            ((TextView) findViewById(R.id.tvSelctedTempTime)).setText("N/A");
-            return;
-        }
-
-        ((TextView) findViewById(R.id.tvSelctedTemp)).setText(round(acc.getTemp(), 1) + "°C");
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-        ((TextView) findViewById(R.id.tvSelctedTempTime)).setText(simpleDateFormat.format(acc.getTime()));
-    }
 
     @Override
     public void onBackPressed() {
@@ -652,7 +264,7 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else if(!poolScreen) {
-            navigationView.getMenu().getItem(0).setChecked(true);
+            /*navigationView.getMenu().getItem(0).setChecked(true);
             fabEnabled=true;
             poolScreen=true;
             fab.show();
@@ -661,7 +273,7 @@ public class MainActivity extends AppCompatActivity
             initSeekbars=!initSeekbars;
             initControls();
             helloController.setChart(helloChart);
-            updateHelloChart();
+            updateHelloChart();*/
         }
         else
             super.onBackPressed();
@@ -684,13 +296,13 @@ public class MainActivity extends AppCompatActivity
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_reload) {
             progressDialog.show();
-            RestController.getAllTemps(instance);
+            RestController.getAllTemps(instance,poolFragment);
             return true;
         }
 
         if (id == R.id.action_forceTemperature) {
             progressDialog.show();
-            RestController.forceNewTemperature(instance);
+            RestController.forceNewTemperature(instance,poolFragment);
             return true;
         }
 
@@ -701,11 +313,13 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
         item.setChecked(true);
         int id = item.getItemId();
 
         if (id == R.id.nav_camera) {
-            fabEnabled=true;
+            /*fabEnabled=true;
             poolScreen=true;
             fab.show();
             contentPanel.removeAllViews();
@@ -714,40 +328,37 @@ public class MainActivity extends AppCompatActivity
             initControls();
             helloController.setChart(helloChart);
             updateHelloChart();
-            // Handle the camera action
+            // Handle the camera action*/
+            ft.replace(R.id.fragmentFrame,new PoolTempFragment(),"PoolTempFragment");
+
+
+
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
-            poolScreen=false;
+            /*poolScreen=false;
             fabEnabled=false;
             fab.hide();
             contentPanel.removeAllViews();
             contentPanel.addView(getLayoutInflater().inflate(R.layout.settings_layout,null));
-            settingsActivity.initControls();
+            settingsActivity.initControls();*/
+            ft.replace(R.id.fragmentFrame,new SettingsFragment(),"SettingsFragment");
+            //startActivity(new Intent(this,SettingsFragment.class));
 
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_send) {
 
         }
-
+        ft.commit();
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
-    public void refreshPossibleDates(){
-        possibleDates = TempSource.getAllPossibleDates();
-        initSeekBars();
-    }
 
-    private double round(double value, int places) {
-        if (places < 0) throw new IllegalArgumentException();
 
-        BigDecimal bd = new BigDecimal(value);
-        bd = bd.setScale(places, RoundingMode.HALF_UP);
-        return bd.doubleValue();
-    }
+
 }

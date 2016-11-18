@@ -13,6 +13,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Activitys.MainActivity;
+import com.example.lukas.pooltemp.Fragments.PoolTempFragment;
 import com.example.lukas.pooltemp.Model.Temperature;
 
 import org.json.JSONArray;
@@ -32,7 +33,7 @@ public class RestController {
     static final String WIFI_URL="http://192.168.0.65:8080/PoolTempServer/webresources/TemperatureREST";
 
 
-    public static void getAllTemps(final MainActivity c){
+    public static void getAllTemps(final MainActivity c,final PoolTempFragment pf){
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, REST_URL, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(final JSONArray response) {
@@ -46,7 +47,7 @@ public class RestController {
                         temperatureDataSource.clearTable();
 
                         if(response.length()==0) {
-                            c.updateHelloChart();
+                            pf.updateHelloChart();
                             return;
                         }
 
@@ -78,8 +79,8 @@ public class RestController {
 
                         }
                         // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
-                        c.refreshPossibleDates();
-                        c.updateHelloChart();
+                        pf.refreshPossibleDates();
+                        pf.updateHelloChart();
                         c.resetProgress();
                     }
                 }).start();
@@ -92,14 +93,14 @@ public class RestController {
             public void onErrorResponse(VolleyError error) {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
-                c.updateHelloChart();
+                pf.updateHelloChart();
             }
         });
 
         Volley.newRequestQueue(c).add(request);
     }
 
-    public static void getTempsSince(final MainActivity c, final Date lastDate){
+    public static void getTempsSince(final MainActivity c, final Date lastDate, final PoolTempFragment pf){
         String url=REST_URL+"/"+lastDate.getTime();
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, new Response.Listener<JSONArray>() {
             @Override
@@ -112,7 +113,7 @@ public class RestController {
                         //temperatureDataSource.clearTable();
 
                         if(response.length()==0) {
-                            c.updateHelloChart();
+                            pf.updateHelloChart();
                             return;
                         }
 
@@ -144,8 +145,8 @@ public class RestController {
 
                         }
                         // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
-                        c.refreshPossibleDates();
-                        c.updateHelloChart();
+                        pf.refreshPossibleDates();
+                        pf.updateHelloChart();
                         c.resetProgress();
                     }
                 }).start();
@@ -161,14 +162,14 @@ public class RestController {
                 //temperatureDataSource.clearTable();
                 //c.updateHelloChart();
                 Toast.makeText(c.getBaseContext(),"Daten konnten nicht aktualisiert werden \n Daten werden über Wifi abgerufen",Toast.LENGTH_LONG).show();
-                getTempsSinceOverWifi(c, lastDate);
+                getTempsSinceOverWifi(c, lastDate,pf);
             }
         });
         RequestQueue queue= Volley.newRequestQueue(c);
         queue.add(request);
     }
 
-    public static void forceNewTemperature(final MainActivity c){
+    public static void forceNewTemperature(final MainActivity c, final PoolTempFragment pf){
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, REST_URL+"/forceTemperature", new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
@@ -177,7 +178,7 @@ public class RestController {
 
 
                 if(response.length()==0) {
-                    c.updateHelloChart();
+                    pf.updateHelloChart();
                     return;
                 }
 
@@ -208,7 +209,7 @@ public class RestController {
 
                 }
                 // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
-                c.updateHelloChart();
+                pf.updateHelloChart();
 
 
             }
@@ -217,8 +218,8 @@ public class RestController {
             public void onErrorResponse(VolleyError error) {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
-                c.refreshPossibleDates();
-                c.updateHelloChart();
+                pf.refreshPossibleDates();
+                pf.updateHelloChart();
             }
         });
 
@@ -226,7 +227,7 @@ public class RestController {
         Volley.newRequestQueue(c).add(request);
     }
 
-    public static void getTempsSinceOverWifi(final MainActivity c, Date lastDate){
+    public static void getTempsSinceOverWifi(final MainActivity c, Date lastDate, final PoolTempFragment pf){
         String url=WIFI_URL+"/"+lastDate.getTime();
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, new Response.Listener<JSONArray>() {
             @Override
@@ -236,7 +237,7 @@ public class RestController {
                 //temperatureDataSource.clearTable();
 
                 if(response.length()==0) {
-                    c.updateHelloChart();
+                    pf.updateHelloChart();
                     return;
                 }
 
@@ -267,8 +268,8 @@ public class RestController {
 
                 }
                  Toast.makeText(c,"Daten wurde über WIFI abgerufen",Toast.LENGTH_LONG).show();
-                c.refreshPossibleDates();
-                c.updateHelloChart();
+                pf.refreshPossibleDates();
+                pf.updateHelloChart();
 
 
             }
@@ -277,7 +278,7 @@ public class RestController {
             public void onErrorResponse(VolleyError error) {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
-                c.updateHelloChart();
+                pf.updateHelloChart();
                 Toast.makeText(c.getBaseContext(),"Daten konnten nicht aktualisiert werden",Toast.LENGTH_LONG).show();
             }
         });
