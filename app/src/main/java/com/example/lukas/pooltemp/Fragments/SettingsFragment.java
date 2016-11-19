@@ -19,6 +19,8 @@ public class SettingsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.settings_layout,container,false);
 
+        //TODO transfer Settings Logic from SettingsActivity
+
         return  view;
     }
 }

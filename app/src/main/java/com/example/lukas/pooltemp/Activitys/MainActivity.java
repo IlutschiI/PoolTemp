@@ -2,6 +2,7 @@ package com.example.lukas.pooltemp.Activitys;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity
 
     FragmentManager fm;
 
+    FloatingActionButton fab;
 
     PoolTempFragment poolFragment;
 
@@ -93,13 +95,13 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         //contentPanel=(LinearLayout) findViewById(R.id.contentPanel);
         //contentPanel.addView(getLayoutInflater().inflate(R.layout.content_main,null));
-
+        instance = this;
         poolFragment=new PoolTempFragment();
         fm = getSupportFragmentManager();
         FragmentTransaction fs=fm.beginTransaction();
         fs.replace(R.id.fragmentFrame,poolFragment);
+        fs.commit();
 
-        instance = this;
 
 
 
@@ -143,15 +145,22 @@ public class MainActivity extends AppCompatActivity
         progress.setProgress(0);
         progressDialog.dismiss();
 
-        runOnUiThread(new Runnable() {
+/*
+        fab = (FloatingActionButton) findViewById(R.id.fab);    //FloatingActionButton
+        fab.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                progressDialog.show();
+            public void onClick(View view) {                      //Onclicklistener des FloatingActionButtons
+                //if (!controller.isanimating())
+                //   controller.addPoint(new Point("", 25));
+                fab.setEnabled(false);
+                //progressDialog.show();
+
+                RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime(),poolFragment);
+
             }
         });
 
-
-
+*/
 
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -234,10 +243,19 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+
+                if(max==-1)
+                {
+                    progressDialog.show();
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+                    return;
+                }
+
                 if(prog!=progress.getMax())
                     progress.setMax(max);
                 progress.setProgress(prog);
-
+                if(!progressDialog.isShowing())
+                    progressDialog.show();
                 progressText.setText(prog+"/"+max);
             }
         });
@@ -250,12 +268,33 @@ public class MainActivity extends AppCompatActivity
             public void run() {
                 progress.setProgress(0);
                 progressText.setText("--/--");
+                progressDialog.dismiss();
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
             }
         });
 
     }
 
+    public void setFabEnabled(final boolean b) {
 
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                fab.setEnabled(b);
+                if (b) {
+
+
+                    //fab.setBackgroundColor(Color.parseColor("#FF4081"));
+                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FF4081")));
+
+                } else
+                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#93264B")));
+            }
+        });
+        //int alpha = background.getAlpha();
+
+
+    }
 
     @Override
     public void onBackPressed() {
@@ -356,6 +395,13 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    public void showOrHideFab(boolean showFab){
+        if(showFab)
+            fab.show();
+        else
+            fab.hide();
     }
 
 

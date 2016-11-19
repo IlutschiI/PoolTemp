@@ -73,6 +73,7 @@ public class PoolTempFragment extends Fragment {
     public PoolTempFragment() {
         activity=MainActivity.instance;
         instance=this;
+        TempSource=TemperatureDataSource.getInstance(activity);
     }
 
 
@@ -81,11 +82,9 @@ public class PoolTempFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view=inflater.inflate(R.layout.content_main,container,false);
+        possibleDates = TempSource.getAllPossibleDates();
 
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
                 initControls();
 
                 helloController = new HelloChartController(activity, helloChart);
@@ -98,8 +97,20 @@ public class PoolTempFragment extends Fragment {
 
                 updateHelloChart();
                 //progressDialog.dismiss();
+
+        fab = (FloatingActionButton) view.findViewById(R.id.fab);    //FloatingActionButton
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {                      //Onclicklistener des FloatingActionButtons
+                //if (!controller.isanimating())
+                //   controller.addPoint(new Point("", 25));
+                fab.setEnabled(false);
+                //progressDialog.show();
+                activity.updateProgress(-1,0);
+                RestController.getTempsSince(activity, TempSource.getActualTemperature().getTime(),instance);
+
             }
-        }).start();
+        });
 
         return view;
     }
@@ -365,18 +376,21 @@ public class PoolTempFragment extends Fragment {
                 int i = scrollView.getScrollY();
 
                 if (i >= 130) {
+                    //activity.showOrHideFab(false);
                     fab.hide();
                 } else
-                    fab.show();
+                    //activity.showOrHideFab(true);
+                fab.show();
 
                 if(!fabEnabled)
                 {
+                    //activity.showOrHideFab(false);
                     fab.hide();
                 }
             }
         });
 
-
+/*
         fab = (FloatingActionButton) view.findViewById(R.id.fab);    //FloatingActionButton
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -390,7 +404,7 @@ public class PoolTempFragment extends Fragment {
 
             }
         });
-
+*/
 
         ib_zoom=(ImageButton)view.findViewById(R.id.ib_zoom);
         ib_zoom.setOnClickListener(new View.OnClickListener() {
@@ -415,6 +429,7 @@ public class PoolTempFragment extends Fragment {
     Fab wird Enabled bzw. Disabled und die Farbe wird dementsprechend geändert
  */
     public void setFabEnabled(final boolean b) {
+        //activity.setFabEnabled(b);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
