@@ -45,7 +45,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:text="25°C"
+                    android:text="N/V"
                     android:textSize="@dimen/cardContentTextSize"
                     android:textStyle="bold" />
 

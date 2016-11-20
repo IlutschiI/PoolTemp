@@ -168,7 +168,7 @@ public class TemperatureDataSource {
 
         Temperature temp1;
         Temperature temp2;
-        List<Temperature> minimizedList= new LinkedList<>();
+        List<Temperature> minimizedList;
         int numberPoints=Settings.getInstance().getPoolSettings().getNumberOfPoints();
         while (result.size()>= numberPoints)
         {

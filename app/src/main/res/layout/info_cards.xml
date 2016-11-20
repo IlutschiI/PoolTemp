@@ -44,7 +44,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="10dp"
-                android:text="26.08.2016 11:00"
+                android:text="N/V"
                 android:textSize="@dimen/cardContentAdditionalTextSize"
                 android:textStyle="normal" />
 

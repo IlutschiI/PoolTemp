@@ -1,5 +1,6 @@
 package com.example.lukas.pooltemp.Fragments;
 
+import android.app.ProgressDialog;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
@@ -66,6 +67,8 @@ public class PoolTempFragment extends Fragment {
     boolean isScrollable = true;
     FloatingActionButton fab;
     PoolTempFragment instance;
+    ProgressDialog pdLoad;
+    List<Temperature> temps;
 
     View view;
 
@@ -82,21 +85,35 @@ public class PoolTempFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         view=inflater.inflate(R.layout.content_main,container,false);
+
         possibleDates = TempSource.getAllPossibleDates();
 
-
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
                 initControls();
 
                 helloController = new HelloChartController(activity, helloChart);
-                runOnUiThread(new Runnable() {
+                if(temps==null||temps.size()==0)
+                temps= TempSource.getAllTemperatures();
+                try {
+                    Thread.currentThread().sleep(350);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                /*runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        helloController.setData(TempSource.getAllTemperatures());
+                        helloController.setData(temps);
                     }
-                });
-
+                });*/
+                helloController.setData(temps);
                 updateHelloChart();
                 //progressDialog.dismiss();
+            }
+        }).start();
+
+
 
         fab = (FloatingActionButton) view.findViewById(R.id.fab);    //FloatingActionButton
         fab.setOnClickListener(new View.OnClickListener() {
@@ -126,6 +143,8 @@ public class PoolTempFragment extends Fragment {
                 helloController.setStartEndOfData(minDate, maxDate);
                 //progressDialog.dismiss();
                 setFabEnabled(true);
+
+                pdLoad.dismiss();
                 System.out.println("----------------------------System running--------------------------");
             }
         });
@@ -339,6 +358,18 @@ public class PoolTempFragment extends Fragment {
         tvLowestTemp = (TextView) view.findViewById(R.id.tvLowestTemp);
         tvAccTemp = (TextView) view.findViewById(R.id.tvAccTemp);
         tvYesterdayTemp = (TextView) view.findViewById(R.id.tvYesterdayTemp);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(pdLoad==null)
+                pdLoad=new ProgressDialog(activity);
+                pdLoad.setIndeterminate(true);
+                pdLoad.setTitle("Bitte Warten");
+                pdLoad.setMessage("Daten werden geladen...");
+                pdLoad.show();
+            }
+        });
+
 
 
         helloChart = (lecho.lib.hellocharts.view.LineChartView) view.findViewById(R.id.helloLinechart);

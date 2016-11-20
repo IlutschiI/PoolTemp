@@ -1,20 +1,13 @@
 package com.example.lukas.pooltemp.Activitys;
 
-import android.app.ProgressDialog;
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.CardView;
-import android.view.MotionEvent;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -23,20 +16,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.SeekBar;
-import android.widget.Spinner;
 import android.widget.TextView;
-
-import com.db.chart.view.Tooltip;
-import com.example.lukas.pooltemp.Adapter.EndDateSpinnerAdapter;
-import com.example.lukas.pooltemp.Adapter.LockableScrollView;
-import com.example.lukas.pooltemp.Adapter.StartDateSpinnerAdapter;
-import com.example.lukas.pooltemp.Controller.HelloChartController;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Fragments.PoolTempFragment;
 import com.example.lukas.pooltemp.Fragments.SettingsFragment;
@@ -44,48 +25,24 @@ import com.example.lukas.pooltemp.Model.Temperature;
 import com.example.lukas.pooltemp.R;
 import com.example.lukas.pooltemp.RESTController.RestController;
 import com.example.lukas.pooltemp.Settings.Settings;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
-import lecho.lib.hellocharts.listener.LineChartOnValueSelectListener;
-import lecho.lib.hellocharts.model.PointValue;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    float[] dataFloat;
-    Tooltip tip;
-    Spinner startDateSpinner;
-    Spinner endDateSpinner;
+
     TemperatureDataSource TempSource;
-
-    boolean startDateSpinnerInitialized = false;
-    boolean endDateSpinnerInitialized = false;
-
-    StartDateSpinnerAdapter startDateSpinnerAdapter;
-    EndDateSpinnerAdapter endDateSpinnerAdapter;
     public static MainActivity instance;
     boolean poolScreen=true;
     List<Date> possibleDates;
-    //LinearLayout contentPanel;
-    SettingsActivity settingsActivity;
     ProgressBar progress;
     AlertDialog progressDialog;
     TextView progressText;
-    List<Temperature> data;
-
     FragmentManager fm;
-
-    FloatingActionButton fab;
-
     PoolTempFragment poolFragment;
+    SettingsFragment settingsFragment;
 
 
     @Override
@@ -93,24 +50,30 @@ public class MainActivity extends AppCompatActivity
         System.out.println("---------------------------------------System start----------------------------------");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //contentPanel=(LinearLayout) findViewById(R.id.contentPanel);
-        //contentPanel.addView(getLayoutInflater().inflate(R.layout.content_main,null));
         instance = this;
+
+        //creating the Fragments
         poolFragment=new PoolTempFragment();
+        settingsFragment=new SettingsFragment();
+        //updating the stored Settings
+        settingsFragment.updateSettings();
+
+        //Set the first Fragment (default PoolTempFragment)
         fm = getSupportFragmentManager();
-        FragmentTransaction fs=fm.beginTransaction();
-        fs.replace(R.id.fragmentFrame,poolFragment);
-        fs.commit();
+        FragmentTransaction ft=fm.beginTransaction();
+        ft.replace(R.id.fragmentFrame,poolFragment);
+        ft.setCustomAnimations(android.R.anim.fade_in,android.R.anim.fade_out);
+        ft.commit();
 
 
 
 
-        settingsActivity=new SettingsActivity(instance);
-        settingsActivity.updateSettings();
-        if(Settings.getInstance().getPoolSettings().getNumberOfPoints()==0)
-            Settings.getInstance().getPoolSettings().setNumberOfPoints(100);
+        //settingsActivity=new SettingsActivity(instance);
+        //settingsActivity.updateSettings();
+        //if(Settings.getInstance().getPoolSettings().getNumberOfPoints()==0)
+        //   Settings.getInstance().getPoolSettings().setNumberOfPoints(100);
 
-
+        //Loading Data from the Server when no Data is available
         TempSource = TemperatureDataSource.getInstance(this);
         if (TempSource.countEntries() != 0) {
             //RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
@@ -123,19 +86,19 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
-        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!before all Dates");
+        //System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!before all Dates");
+
+        //Calculating all possible Dates for the Seekbars
         possibleDates = TempSource.getAllPossibleDates();
-        System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!after all Dates");
+        //System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!after all Dates");
 
 
+        //initializing the progressDialog
         progressDialog=new AlertDialog.Builder(this).setTitle("Bitte warten")
                 .setView(R.layout.progress_dialog_progress)
                 .setCancelable(false)
                 .create();
         progressDialog.show();
-
-
-
         progress=(ProgressBar) progressDialog.findViewById(R.id.pbProgressDialogProgress);
         progressText=(TextView) progressDialog.findViewById(R.id.tvProgressDialogProgress);
         progress.setMax(11);
@@ -145,83 +108,12 @@ public class MainActivity extends AppCompatActivity
         progress.setProgress(0);
         progressDialog.dismiss();
 
-/*
-        fab = (FloatingActionButton) findViewById(R.id.fab);    //FloatingActionButton
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {                      //Onclicklistener des FloatingActionButtons
-                //if (!controller.isanimating())
-                //   controller.addPoint(new Point("", 25));
-                fab.setEnabled(false);
-                //progressDialog.show();
 
-                RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime(),poolFragment);
-
-            }
-        });
-
-*/
-
-
+        //setting the Toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
-        //TextView tv = (TextView) findViewById(R.id.mainTV);
-
-        //Init.initDB(TempSource);
-
-
-        //LinechartController
-        //controller = new LineChartController(this,(LineChartView)findViewById(R.id.linechart));
-        //controller.initChart();
-
-
-
-
-
-
-
-/*
-        List<Temperature> temps=TempSource.getAllTemperatures();
-        dataFloat= new float[temps.size()];
-        for (int i = 0; i<temps.size();i++) {
-            tv.setText(tv.getText() +"\n "+temps.get(i).toString());
-            dataFloat[i]=(float)temps.get(i).getTemp();
-        }
-        tv.setText(tv.getText() + "\n \nEs sind " + TempSource.countEntries() + " Einträge vorhanden");
-
-
-        LineSet line = new LineSet(new String[] {"10","20","30","40","50","","","","","",""},dataFloat);
-
-        line.setFill(Color.parseColor("#311B92"))
-                .setSmooth(true)
-                .setColor(Color.parseColor("#758cbb"))
-                .setDotsColor(Color.CYAN);
-        //controller.addLine(line);
-        //controller.showChart();
-
-        //Scrollview
-        //Der FAB wird, wenn hinutergescrolled wird, ausgeblendet
-
-
-        List<String> dateList = new LinkedList<>();
-        dateList.add("Datum auswählen");
-        for (Date d :
-                possibleDates) {
-
-
-            int yearInResult = Integer.valueOf((String) android.text.format.DateFormat.format("yyyy", d));
-            int monthInResult = Integer.valueOf((String) android.text.format.DateFormat.format("MM", d));
-            int dayInMonth = Integer.valueOf((String) android.text.format.DateFormat.format("dd", d));
-
-            dateList.add("" + dayInMonth + "." + monthInResult + "." + yearInResult);
-
-        }
-
-
-*/
-
+        //setting the Drawer
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -232,14 +124,9 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
     }
 
-
-
-
-
-
-
-
+    //Updating the Values of the ProgressDialog
     public void updateProgress(final int max,final int prog){
+        //be sure to run on the Ui-Thread
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -262,6 +149,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    //resetting the ProgressDialog
     public void resetProgress(){
         runOnUiThread(new Runnable() {
             @Override
@@ -272,27 +160,6 @@ public class MainActivity extends AppCompatActivity
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
             }
         });
-
-    }
-
-    public void setFabEnabled(final boolean b) {
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                fab.setEnabled(b);
-                if (b) {
-
-
-                    //fab.setBackgroundColor(Color.parseColor("#FF4081"));
-                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FF4081")));
-
-                } else
-                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#93264B")));
-            }
-        });
-        //int alpha = background.getAlpha();
-
 
     }
 
@@ -332,13 +199,13 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
+        //Reloading all Temperatures from the Server
         if (id == R.id.action_reload) {
             progressDialog.show();
             RestController.getAllTemps(instance,poolFragment);
             return true;
         }
-
+        //force the Server to read a new Tmeperature
         if (id == R.id.action_forceTemperature) {
             progressDialog.show();
             RestController.forceNewTemperature(instance,poolFragment);
@@ -357,18 +224,12 @@ public class MainActivity extends AppCompatActivity
         item.setChecked(true);
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            /*fabEnabled=true;
-            poolScreen=true;
-            fab.show();
-            contentPanel.removeAllViews();
-            contentPanel.addView(getLayoutInflater().inflate(R.layout.content_main,null));
-            initSeekbars=!initSeekbars;
-            initControls();
-            helloController.setChart(helloChart);
-            updateHelloChart();
-            // Handle the camera action*/
-            ft.replace(R.id.fragmentFrame,new PoolTempFragment(),"PoolTempFragment");
+        //setting the PoolFragment
+        if (id == R.id.nav_pool) {
+
+            ft.setCustomAnimations(android.R.anim.fade_in,android.R.anim.fade_out);
+            ft.addToBackStack(null);
+            ft.replace(R.id.fragmentFrame,poolFragment,"PoolTempFragment");
 
 
 
@@ -376,35 +237,26 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_slideshow) {
 
-        } else if (id == R.id.nav_manage) {
-            /*poolScreen=false;
-            fabEnabled=false;
-            fab.hide();
-            contentPanel.removeAllViews();
-            contentPanel.addView(getLayoutInflater().inflate(R.layout.settings_layout,null));
-            settingsActivity.initControls();*/
-            ft.replace(R.id.fragmentFrame,new SettingsFragment(),"SettingsFragment");
-            //startActivity(new Intent(this,SettingsFragment.class));
+        }
+        //setting the SettingsFragment
+        else if (id == R.id.nav_manage) {
+
+            ft.setCustomAnimations(android.R.anim.fade_in,android.R.anim.fade_out);
+            ft.addToBackStack(null);
+            ft.replace(R.id.fragmentFrame,settingsFragment,"SettingsFragment");
 
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_send) {
 
         }
+        //finishing the Fragment change
         ft.commit();
+
+        //closing the Drawer
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-
-    public void showOrHideFab(boolean showFab){
-        if(showFab)
-            fab.show();
-        else
-            fab.hide();
-    }
-
-
-
 
 }
