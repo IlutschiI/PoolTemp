@@ -11,4 +11,6 @@
         <item>Array Item Two</item>
         <item>Array Item Three</item>
     </string-array>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
 </resources>

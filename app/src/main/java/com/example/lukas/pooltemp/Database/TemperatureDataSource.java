@@ -46,6 +46,7 @@ public class TemperatureDataSource {
     }
 
     public void open(){
+        if(database==null||!database.isOpen())
         database=dbHelper.getWritableDatabase();
     }
 
@@ -66,7 +67,7 @@ public class TemperatureDataSource {
 
         temp.setId(c.getLong(0));
         c.close();
-        close();
+        //close();
 
 
         return temp;
@@ -78,7 +79,7 @@ public class TemperatureDataSource {
         if(countEntries()==0)
             return temps;
 
-        open();
+        //open();
         Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_Date, null);
 
         c.moveToFirst();
@@ -91,7 +92,7 @@ public class TemperatureDataSource {
         }
         t = new Temperature(c.getDouble(2), new java.util.Date(c.getLong(1)),c.getLong(0));
         temps.add(t);
-        close();
+        //close();
         return temps;
     }
 
@@ -137,7 +138,7 @@ public class TemperatureDataSource {
     public void clearTable(){
         open();
         database.execSQL("Delete from "+SQLiteDBHelper.TABLE_Temp);
-        close();
+        //close();
     }
     public List<Temperature> getTemps(java.util.Date startDate, java.util.Date endDate){
 
@@ -206,7 +207,7 @@ public class TemperatureDataSource {
         Cursor c = database.rawQuery("Select count(*) from "+SQLiteDBHelper.TABLE_Temp,null);
         c.moveToFirst();
         int ret=c.getInt(0);
-        close();
+        //close();
         return ret;
     }
 
@@ -218,10 +219,10 @@ public class TemperatureDataSource {
         c.moveToFirst();
         if(!c.isAfterLast()) {
             Temperature t = new Temperature(round(c.getDouble(2), 1), new java.util.Date(c.getLong(1)), c.getLong(0));
-            close();
+            //close();
             return t;
         }
-        close();
+        //close();
         return null;
 
     }
@@ -235,7 +236,7 @@ public class TemperatureDataSource {
 
         Temperature t = new Temperature(round(c.getDouble(2),1),new java.util.Date(c.getLong(1)),c.getLong(0));
 
-        close();
+        //close();
         return t;
 
     }
@@ -249,7 +250,7 @@ public class TemperatureDataSource {
 
         Temperature t = new Temperature(round(c.getDouble(2),1),new java.util.Date(c.getLong(1)),c.getLong(0));
 
-        close();
+        //close();
         return t;
 
     }
@@ -295,7 +296,7 @@ public class TemperatureDataSource {
 
         c.moveToFirst();
         double result=c.getDouble(0);
-        close();
+        //close();
         return round(result,1);
     }
 
@@ -317,7 +318,8 @@ public class TemperatureDataSource {
         c.moveToFirst();
 
         long ret=c.getLong(0);
-        close();
+        //close();
+        c.close();
         return new java.util.Date(ret);
     }
 
@@ -330,7 +332,7 @@ public class TemperatureDataSource {
 
         c.moveToFirst();
         long ret=c.getLong(0);
-        close();
+        //close();
         return new java.util.Date(ret);
     }
 

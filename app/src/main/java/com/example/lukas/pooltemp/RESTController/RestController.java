@@ -79,7 +79,9 @@ public class RestController {
 
                         }
                         // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
+
                         pf.refreshPossibleDates();
+                        pf.initSeekBars();
                         pf.updateHelloChart();
                         c.resetProgress();
                     }
@@ -172,44 +174,53 @@ public class RestController {
     public static void forceNewTemperature(final MainActivity c, final PoolTempFragment pf){
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, REST_URL+"/forceTemperature", new Response.Listener<JSONObject>() {
             @Override
-            public void onResponse(JSONObject response) {
+            public void onResponse(final JSONObject response) {
 
-                TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
-
-
-                if(response.length()==0) {
-                    pf.updateHelloChart();
-                    return;
-                }
-
-                System.out.println(response);
-                JSONObject jsonObject;
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                double temp;
-                Date time;
-                String t="";
-                Temperature temperature;
-                try {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
 
 
-                        jsonObject = response;
+                        if(response.length()==0) {
+                            pf.updateHelloChart();
+                            return;
+                        }
 
-                        temp=jsonObject.getDouble("temperature");
-                        t=jsonObject.getString("time").substring(0,19);
-                        time=sdf.parse(jsonObject.getString("time").substring(0,19));
-                        temperature=new Temperature(temp,time);
-                        temperatureDataSource.insertTemperature(temperature);
+                        System.out.println(response);
+                        JSONObject jsonObject;
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                        double temp;
+                        Date time;
+                        String t="";
+                        //c.setProgressForForceNewTemp();
+                        Temperature temperature;
+                        try {
+
+
+                            jsonObject = response;
+
+                            temp=jsonObject.getDouble("temperature");
+                            t=jsonObject.getString("time").substring(0,19);
+                            time=sdf.parse(jsonObject.getString("time").substring(0,19));
+                            temperature=new Temperature(temp,time);
+                            temperatureDataSource.insertTemperature(temperature);
 
 
 
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                } catch (ParseException e) {
-                    e.printStackTrace();
 
-                }
-                // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
-                pf.updateHelloChart();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+
+                        }
+                        // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
+                        pf.updateHelloChart();
+                        c.resetProgress();
+                    }
+                }).start();
+
 
 
             }
@@ -220,6 +231,7 @@ public class RestController {
                 //temperatureDataSource.clearTable();
                 pf.refreshPossibleDates();
                 pf.updateHelloChart();
+                c.resetProgress();
             }
         });
 

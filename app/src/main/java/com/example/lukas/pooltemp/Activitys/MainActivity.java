@@ -5,6 +5,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
@@ -157,7 +158,21 @@ public class MainActivity extends AppCompatActivity
                 progress.setProgress(0);
                 progressText.setText("--/--");
                 progressDialog.dismiss();
+                progress.setIndeterminate(false);
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+            }
+        });
+
+    }
+
+    public void setProgressForForceNewTemp(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                progress.setIndeterminate(true);
+                progressText.setText("Lade aktuelle Temperatur");
+                progressDialog.show();
             }
         });
 
@@ -169,20 +184,17 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else if(!poolScreen) {
-            /*navigationView.getMenu().getItem(0).setChecked(true);
-            fabEnabled=true;
-            poolScreen=true;
-            fab.show();
-            contentPanel.removeAllViews();
-            contentPanel.addView(getLayoutInflater().inflate(R.layout.content_main,null));
-            initSeekbars=!initSeekbars;
-            initControls();
-            helloController.setChart(helloChart);
-            updateHelloChart();*/
         }
-        else
+        else {
             super.onBackPressed();
+            Fragment fragment=fm.findFragmentById(R.id.fragmentFrame);
+            if(fragment instanceof PoolTempFragment){
+                navigationView.getMenu().getItem(0).setChecked(true);
+            }
+            else
+                navigationView.getMenu().getItem(3).setChecked(true);
+
+        }
     }
 
     @Override
@@ -207,7 +219,7 @@ public class MainActivity extends AppCompatActivity
         }
         //force the Server to read a new Tmeperature
         if (id == R.id.action_forceTemperature) {
-            progressDialog.show();
+            setProgressForForceNewTemp();
             RestController.forceNewTemperature(instance,poolFragment);
             return true;
         }

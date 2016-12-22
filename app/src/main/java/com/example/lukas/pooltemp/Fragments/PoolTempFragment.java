@@ -76,6 +76,7 @@ public class PoolTempFragment extends Fragment {
     public PoolTempFragment() {
         activity=MainActivity.instance;
         instance=this;
+        if(activity!=null)
         TempSource=TemperatureDataSource.getInstance(activity);
     }
 
@@ -84,6 +85,12 @@ public class PoolTempFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+        if(activity==null)
+        {
+            activity=MainActivity.instance;
+            TempSource=TemperatureDataSource.getInstance(activity);
+        }
         view=inflater.inflate(R.layout.content_main,container,false);
 
         possibleDates = TempSource.getAllPossibleDates();
@@ -132,13 +139,24 @@ public class PoolTempFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        //TempSource=TemperatureDataSource.getInstance(activity);
+        if(possibleDates.size()!=0)
+        initSeekBars();
+    }
+
     public void updateHelloChart() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 setInfoCardText();
-                if (!initSeekbars)
+                possibleDates = TempSource.getAllPossibleDates();
+                if (!initSeekbars&&possibleDates.size()!=0){
                     initSeekBars();
+                }
+
                 possibleDates = TempSource.getAllPossibleDates();
                 helloController.setStartEndOfData(minDate, maxDate);
                 //progressDialog.dismiss();
@@ -238,7 +256,7 @@ public class PoolTempFragment extends Fragment {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        //progressDialog.show();
+                        pdLoad.show();
                     }
                 });
 
@@ -338,7 +356,7 @@ public class PoolTempFragment extends Fragment {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        //progressDialog.show();
+                        pdLoad.show();
                         updateHelloChart();
                     }
                 });
