@@ -16,7 +16,7 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
 
 
     private static final String DATABASE_NAME = "temp.db";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     // Database creation sql statement
     private static final String DATABASE_CREATE = "create table "

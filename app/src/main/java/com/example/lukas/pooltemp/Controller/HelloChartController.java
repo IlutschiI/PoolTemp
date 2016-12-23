@@ -54,16 +54,24 @@ public class HelloChartController {
     }
 
     public void setData(List<Temperature> tempList) {
+        double highestValue=0;
+
+        for (Temperature t :
+                tempList) {
+            if(t.getTemp()>highestValue)
+                highestValue=t.getTemp();
+        }
+
         List<PointValue> values = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
-        SimpleDateFormat sdf2 = new SimpleDateFormat("HH:mm");
+        //SimpleDateFormat sdf2 = new SimpleDateFormat("HH:mm");
         List<AxisValue> axisValues = new ArrayList<AxisValue>();
         int i = 0;
         for (Temperature t :
                 tempList) {
             values.add(new PointValue(t.getTime().getTime(), (float) t.getTemp()));
             if (i % 5 == 0&&i!=0)
-                axisValues.add(new AxisValue(t.getTime().getTime()).setLabel(sdf.format(t.getTime())+"\n"+sdf2.format(t.getTime())));
+                axisValues.add(new AxisValue(t.getTime().getTime()).setLabel(sdf.format(t.getTime())));
 
             i++;
 
@@ -127,7 +135,7 @@ public class HelloChartController {
             v.top = 30;
         //v.right*=1.000008;
         if (t != null)
-            v.top = (float) TemperatureDataSource.getInstance(activity).getHighestTemperature().getTemp() + 5;
+            v.top =(float)highestValue*1.2f;
 
         chart.setMaximumViewport(v);
         Handler mainHandler = new Handler(Looper.getMainLooper());
