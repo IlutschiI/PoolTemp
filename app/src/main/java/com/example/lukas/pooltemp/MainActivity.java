@@ -221,7 +221,10 @@ public class MainActivity extends AppCompatActivity
         sbTime.incrementProgressBy(1);
         sbTime.setProgress(0);
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(TempSource.getAllPossibleDates().get(0));
+        try {
+            calendar.setTime(TempSource.getAllPossibleDates().get(0));
+        }
+        catch (Exception e){}
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.MINUTE, 0);
@@ -275,7 +278,10 @@ public class MainActivity extends AppCompatActivity
 
         ttSeekbarEnd = (CardView) findViewById(R.id.ttSeekbarEnd);
 
-        calendar.setTime(TempSource.getAllPossibleDates().get(TempSource.getAllPossibleDates().size() - 1));
+        try{
+            calendar.setTime(TempSource.getAllPossibleDates().get(TempSource.getAllPossibleDates().size() - 1));
+        }
+        catch (Exception e){}
         calendar.set(Calendar.HOUR_OF_DAY, 23);
         calendar.set(Calendar.MINUTE, 59);
         calendar.set(Calendar.MINUTE, 59);
