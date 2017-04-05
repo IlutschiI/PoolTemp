@@ -14,7 +14,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import lecho.lib.hellocharts.formatter.SimpleAxisValueFormatter;
 import lecho.lib.hellocharts.gesture.ZoomType;
@@ -151,7 +150,7 @@ public class HelloChartController {
 
     public void setStartEndOfData(Date startDate, Date endDate) {
 
-        List<Temperature> tempList = TemperatureDataSource.getInstance(activity).getTemps(startDate, endDate);
+        List<Temperature> tempList = TemperatureDataSource.getInstance(activity).getTempsBetween(startDate, endDate);
 
         setData(tempList);
 

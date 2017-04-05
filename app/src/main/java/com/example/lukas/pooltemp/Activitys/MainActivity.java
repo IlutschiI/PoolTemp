@@ -1,5 +1,6 @@
 package com.example.lukas.pooltemp.Activitys;
 
+
 import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -19,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Fragments.PoolTempFragment;
 import com.example.lukas.pooltemp.Fragments.SettingsFragment;
@@ -26,6 +28,7 @@ import com.example.lukas.pooltemp.Model.Temperature;
 import com.example.lukas.pooltemp.R;
 import com.example.lukas.pooltemp.RESTController.RestController;
 import com.example.lukas.pooltemp.Settings.Settings;
+
 import java.util.Date;
 import java.util.List;
 
@@ -36,7 +39,7 @@ public class MainActivity extends AppCompatActivity
 
     TemperatureDataSource TempSource;
     public static MainActivity instance;
-    boolean poolScreen=true;
+    boolean poolScreen = true;
     List<Date> possibleDates;
     ProgressBar progress;
     AlertDialog progressDialog;
@@ -54,19 +57,18 @@ public class MainActivity extends AppCompatActivity
         instance = this;
 
         //creating the Fragments
-        poolFragment=new PoolTempFragment();
-        settingsFragment=new SettingsFragment();
+        poolFragment = new PoolTempFragment();
+        settingsFragment = new SettingsFragment();
         //updating the stored Settings
         settingsFragment.updateSettings();
+        boolean hideProgressbar = false;
 
         //Set the first Fragment (default PoolTempFragment)
         fm = getSupportFragmentManager();
-        FragmentTransaction ft=fm.beginTransaction();
-        ft.replace(R.id.fragmentFrame,poolFragment);
-        ft.setCustomAnimations(android.R.anim.fade_in,android.R.anim.fade_out);
+        FragmentTransaction ft = fm.beginTransaction();
+        ft.replace(R.id.fragmentFrame, poolFragment);
+        ft.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
         ft.commit();
-
-
 
 
         //settingsActivity=new SettingsActivity(instance);
@@ -77,37 +79,38 @@ public class MainActivity extends AppCompatActivity
         //Loading Data from the Server when no Data is available
         TempSource = TemperatureDataSource.getInstance(this);
         if (TempSource.countEntries() != 0) {
+            hideProgressbar = true;
             //RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
         } else {
-            RestController.getAllTemps(instance,poolFragment);
-            try {
-                Thread.currentThread().sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            RestController.getAllTemps(instance, poolFragment);
+            // try {
+            //     Thread.currentThread().sleep(10000);
+            // } catch (InterruptedException e) {
+            //     e.printStackTrace();
+            // }
         }
 
         //System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!before all Dates");
 
         //Calculating all possible Dates for the Seekbars
         possibleDates = TempSource.getAllPossibleDates();
-        //System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!after all Dates");
 
 
         //initializing the progressDialog
-        progressDialog=new AlertDialog.Builder(this).setTitle("Bitte warten")
+        progressDialog = new AlertDialog.Builder(this).setTitle("Bitte warten")
                 .setView(R.layout.progress_dialog_progress)
                 .setCancelable(false)
                 .create();
         progressDialog.show();
-        progress=(ProgressBar) progressDialog.findViewById(R.id.pbProgressDialogProgress);
-        progressText=(TextView) progressDialog.findViewById(R.id.tvProgressDialogProgress);
+        progress = (ProgressBar) progressDialog.findViewById(R.id.pbProgressDialogProgress);
+        progressText = (TextView) progressDialog.findViewById(R.id.tvProgressDialogProgress);
         progress.setMax(11);
         progress.setIndeterminate(false);
 
         progress.setProgress(10);
         progress.setProgress(0);
-        progressDialog.dismiss();
+        if (hideProgressbar)
+            progressDialog.dismiss();
 
 
         //setting the Toolbar
@@ -126,32 +129,31 @@ public class MainActivity extends AppCompatActivity
     }
 
     //Updating the Values of the ProgressDialog
-    public void updateProgress(final int max,final int prog){
+    public void updateProgress(final int max, final int prog) {
         //be sure to run on the Ui-Thread
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
-                if(max==-1)
-                {
+                if (max == -1) {
                     progressDialog.show();
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
                     return;
                 }
 
-                if(prog!=progress.getMax())
+                if (prog != progress.getMax())
                     progress.setMax(max);
                 progress.setProgress(prog);
-                if(!progressDialog.isShowing())
+                if (!progressDialog.isShowing())
                     progressDialog.show();
-                progressText.setText(prog+"/"+max);
+                progressText.setText(prog + "/" + max);
             }
         });
 
     }
 
     //resetting the ProgressDialog
-    public void resetProgress(){
+    public void resetProgress() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -165,7 +167,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    public void setProgressForForceNewTemp(){
+    public void setProgressForForceNewTemp() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -184,14 +186,12 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        }
-        else {
+        } else {
             super.onBackPressed();
-            Fragment fragment=fm.findFragmentById(R.id.fragmentFrame);
-            if(fragment instanceof PoolTempFragment){
+            Fragment fragment = fm.findFragmentById(R.id.fragmentFrame);
+            if (fragment instanceof PoolTempFragment) {
                 navigationView.getMenu().getItem(0).setChecked(true);
-            }
-            else
+            } else
                 navigationView.getMenu().getItem(3).setChecked(true);
 
         }
@@ -214,13 +214,13 @@ public class MainActivity extends AppCompatActivity
         //Reloading all Temperatures from the Server
         if (id == R.id.action_reload) {
             progressDialog.show();
-            RestController.getAllTemps(instance,poolFragment);
+            RestController.getAllTemps(instance, poolFragment);
             return true;
         }
         //force the Server to read a new Tmeperature
         if (id == R.id.action_forceTemperature) {
             setProgressForForceNewTemp();
-            RestController.forceNewTemperature(instance,poolFragment);
+            RestController.forceNewTemperature(instance, poolFragment);
             return true;
         }
 
@@ -239,10 +239,9 @@ public class MainActivity extends AppCompatActivity
         //setting the PoolFragment
         if (id == R.id.nav_pool) {
 
-            ft.setCustomAnimations(android.R.anim.fade_in,android.R.anim.fade_out);
+            ft.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
             ft.addToBackStack(null);
-            ft.replace(R.id.fragmentFrame,poolFragment,"PoolTempFragment");
-
+            ft.replace(R.id.fragmentFrame, poolFragment, "PoolTempFragment");
 
 
         } else if (id == R.id.nav_gallery) {
@@ -253,9 +252,9 @@ public class MainActivity extends AppCompatActivity
         //setting the SettingsFragment
         else if (id == R.id.nav_manage) {
 
-            ft.setCustomAnimations(android.R.anim.fade_in,android.R.anim.fade_out);
+            ft.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
             ft.addToBackStack(null);
-            ft.replace(R.id.fragmentFrame,settingsFragment,"SettingsFragment");
+            ft.replace(R.id.fragmentFrame, settingsFragment, "SettingsFragment");
 
         } else if (id == R.id.nav_share) {
 

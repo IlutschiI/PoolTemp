@@ -55,13 +55,13 @@ public class PoolTempFragment extends Fragment {
     TextView tvHighestTemp;
     TextView tvLowestTemp;
     TextView tvAccTemp;
-    SeekBar sbTime;
+    SeekBar sbTimeStart;
     CardView ttSeekbarEnd;
     SeekBar sbTimeEnd;
     TextView tvYesterdayTemp;
     ImageButton ib_zoom;
     ImageButton ib_zoomOut;
-    boolean fabEnabled=true;
+    boolean fabEnabled = true;
     SimpleDateFormat sdf;
     LockableScrollView scrollView;
     boolean isScrollable = true;
@@ -74,24 +74,22 @@ public class PoolTempFragment extends Fragment {
 
 
     public PoolTempFragment() {
-        activity=MainActivity.instance;
-        instance=this;
-        if(activity!=null)
-        TempSource=TemperatureDataSource.getInstance(activity);
+        activity = MainActivity.instance;
+        instance = this;
+        if (activity != null)
+            TempSource = TemperatureDataSource.getInstance(activity);
     }
-
 
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        if(activity==null)
-        {
-            activity=MainActivity.instance;
-            TempSource=TemperatureDataSource.getInstance(activity);
+        if (activity == null) {
+            activity = MainActivity.instance;
+            TempSource = TemperatureDataSource.getInstance(activity);
         }
-        view=inflater.inflate(R.layout.content_main,container,false);
+        view = inflater.inflate(R.layout.content_main, container, false);
 
         possibleDates = TempSource.getAllPossibleDates();
 
@@ -101,8 +99,8 @@ public class PoolTempFragment extends Fragment {
                 initControls();
 
                 helloController = new HelloChartController(activity, helloChart);
-                if(temps==null||temps.size()==0)
-                temps= TempSource.getAllTemperatures();
+                if (temps == null || temps.size() == 0)
+                    temps = TempSource.getAllTemperatures();
                 try {
                     Thread.currentThread().sleep(350);
                 } catch (InterruptedException e) {
@@ -121,7 +119,6 @@ public class PoolTempFragment extends Fragment {
         }).start();
 
 
-
         fab = (FloatingActionButton) view.findViewById(R.id.fab);    //FloatingActionButton
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -130,8 +127,8 @@ public class PoolTempFragment extends Fragment {
                 //   controller.addPoint(new Point("", 25));
                 fab.setEnabled(false);
                 //progressDialog.show();
-                activity.updateProgress(-1,0);
-                RestController.getTempsSince(activity, TempSource.getActualTemperature().getTime(),instance);
+                activity.updateProgress(-1, 0);
+                RestController.getTempsSince(activity, TempSource.getActualTemperature().getTime(), instance);
 
             }
         });
@@ -143,8 +140,8 @@ public class PoolTempFragment extends Fragment {
     public void onResume() {
         super.onResume();
         //TempSource=TemperatureDataSource.getInstance(activity);
-        if(possibleDates.size()!=0)
-        initSeekBars();
+        if (possibleDates.size() != 0)
+            initSeekBars();
     }
 
     public void updateHelloChart() {
@@ -153,7 +150,7 @@ public class PoolTempFragment extends Fragment {
             public void run() {
                 setInfoCardText();
                 possibleDates = TempSource.getAllPossibleDates();
-                if (!initSeekbars&&possibleDates.size()!=0){
+                if (!initSeekbars && possibleDates.size() != 0) {
                     initSeekBars();
                 }
 
@@ -163,7 +160,7 @@ public class PoolTempFragment extends Fragment {
                 setFabEnabled(true);
 
                 pdLoad.dismiss();
-                System.out.println("----------------------------System running--------------------------");
+                System.out.println("----------------------------Chart Updated--------------------------");
             }
         });
 
@@ -172,11 +169,11 @@ public class PoolTempFragment extends Fragment {
     public void initSeekBars() {
         initSeekbars = true;
         ttSeekbar = (CardView) view.findViewById(R.id.ttSeekbar);
-        sbTime = (SeekBar) view.findViewById(R.id.sbTime);
+        sbTimeStart = (SeekBar) view.findViewById(R.id.sbTime);
 
-        sbTime.setMax(TempSource.getDateRange());
-        sbTime.incrementProgressBy(1);
-        sbTime.setProgress(0);
+        sbTimeStart.setMax(TempSource.getDateRange());
+        sbTimeStart.incrementProgressBy(1);
+        sbTimeStart.setProgress(0);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(possibleDates.get(0));
         calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -185,7 +182,7 @@ public class PoolTempFragment extends Fragment {
         minDate = calendar.getTime();
         ((TextView) ttSeekbar.findViewById(R.id.ttSeekbarValue)).setText(sdf.format(calendar.getTime()));
 
-        sbTime.setOnTouchListener(new View.OnTouchListener() {
+        sbTimeStart.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 if (motionEvent.getAction() == motionEvent.ACTION_DOWN)
@@ -197,14 +194,16 @@ public class PoolTempFragment extends Fragment {
                 return false;
             }
         });
-        sbTime.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        sbTimeStart.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                //preventing from overlapping the 2 seekbars
                 if (i > sbTimeEnd.getProgress()) {
                     seekBar.setProgress(i - 1);
                     return;
                     // Toast.makeText(getBaseContext(),"not allowed",Toast.LENGTH_LONG).show();
                 }
+                //Calc MinDate
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTime(possibleDates.get(0));
                 calendar.add(Calendar.DATE, i);
@@ -218,14 +217,12 @@ public class PoolTempFragment extends Fragment {
                 int width = seekBar.getWidth()
                         - seekBar.getPaddingLeft()
                         - seekBar.getPaddingRight();
-                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.JELLY_BEAN) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                     int x = seekBar.getThumb().getBounds().left;
-                    if(((double)x/width)>=0.9)
-                        x=(int)(width*0.90);
+                    if (((double) x / width) >= 0.9)
+                        x = (int) (width * 0.90);
                     ttSeekbar.setX(x);
-                }
-                else
-                {
+                } else {
 
                     int thumbPos = seekBar.getPaddingLeft()
                             + width
@@ -253,22 +250,12 @@ public class PoolTempFragment extends Fragment {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 ttSeekbar.setVisibility(View.INVISIBLE);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        pdLoad.show();
-                    }
-                });
-
-
-
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         updateHelloChart();
                     }
                 }).start();
-                //updateChartsRange();
             }
         });
 
@@ -297,10 +284,10 @@ public class PoolTempFragment extends Fragment {
         sbTimeEnd.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                if (i < sbTime.getProgress()) {
+                if (i < sbTimeStart.getProgress()) {
                     seekBar.setProgress(i + 1);
                     return;
-                    // TODO do the same as done in sbTime
+                    // TODO do the same as done in sbTimeStart
                 }
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTime(possibleDates.get(0));
@@ -317,14 +304,12 @@ public class PoolTempFragment extends Fragment {
                 int width = seekBar.getWidth()
                         - seekBar.getPaddingLeft()
                         - seekBar.getPaddingRight();
-                if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.JELLY_BEAN) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                     int x = seekBar.getThumb().getBounds().left;
-                    if(((double)x/width)>=0.9)
-                        x=(int)(width*0.90);
+                    if (((double) x / width) >= 0.9)
+                        x = (int) (width * 0.90);
                     ttSeekbarEnd.setX(x);
-                }
-                else
-                {
+                } else {
 
                     int thumbPos = seekBar.getPaddingLeft()
                             + width
@@ -353,16 +338,13 @@ public class PoolTempFragment extends Fragment {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 ttSeekbarEnd.setVisibility(View.INVISIBLE);
                 //updateChartsRange();
-                runOnUiThread(new Runnable() {
+                ttSeekbar.setVisibility(View.INVISIBLE);
+                new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        pdLoad.show();
                         updateHelloChart();
                     }
-                });
-
-
-
+                }).start();
             }
         });
 
@@ -379,15 +361,14 @@ public class PoolTempFragment extends Fragment {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(pdLoad==null)
-                pdLoad=new ProgressDialog(activity);
+                if (pdLoad == null)
+                    pdLoad = new ProgressDialog(activity);
                 pdLoad.setIndeterminate(true);
                 pdLoad.setTitle("Bitte Warten");
                 pdLoad.setMessage("Daten werden geladen...");
                 pdLoad.show();
             }
         });
-
 
 
         helloChart = (lecho.lib.hellocharts.view.LineChartView) view.findViewById(R.id.helloLinechart);
@@ -429,10 +410,9 @@ public class PoolTempFragment extends Fragment {
                     fab.hide();
                 } else
                     //activity.showOrHideFab(true);
-                fab.show();
+                    fab.show();
 
-                if(!fabEnabled)
-                {
+                if (!fabEnabled) {
                     //activity.showOrHideFab(false);
                     fab.hide();
                 }
@@ -455,7 +435,7 @@ public class PoolTempFragment extends Fragment {
         });
 */
 
-        ib_zoom=(ImageButton)view.findViewById(R.id.ib_zoom);
+        ib_zoom = (ImageButton) view.findViewById(R.id.ib_zoom);
         ib_zoom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -463,7 +443,7 @@ public class PoolTempFragment extends Fragment {
             }
         });
 
-        ib_zoomOut=(ImageButton)view.findViewById(R.id.ib_zoom_out);
+        ib_zoomOut = (ImageButton) view.findViewById(R.id.ib_zoom_out);
         ib_zoomOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -544,12 +524,12 @@ public class PoolTempFragment extends Fragment {
         ((TextView) view.findViewById(R.id.tvSelctedTempTime)).setText(simpleDateFormat.format(acc.getTime()));
     }
 
-    public void runOnUiThread(Runnable r){
+    public void runOnUiThread(Runnable r) {
         Handler mainHandler = new Handler(Looper.getMainLooper());
         mainHandler.post(r);
     }
 
-    public void refreshPossibleDates(){
+    public void refreshPossibleDates() {
         possibleDates = TempSource.getAllPossibleDates();
         initSeekBars();
     }

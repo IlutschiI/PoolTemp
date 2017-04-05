@@ -23,6 +23,8 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by Lukas on 21.08.2016.
@@ -58,6 +60,7 @@ public class RestController {
                         Date time;
                         String t="";
                         Temperature temperature;
+                        List<Temperature> temperatureList=new LinkedList<Temperature>();
                         try {
                             for (int i = 0; i < response.length(); i++) {
 
@@ -67,11 +70,13 @@ public class RestController {
                                 t=jsonObject.getString("time").substring(0,19);
                                 time=sdf.parse(jsonObject.getString("time").substring(0,19));
                                 temperature=new Temperature(temp,time);
-                                temperatureDataSource.insertTemperature(temperature);
-                                c.updateProgress(response.length(),i-1);
+//                                temperatureDataSource.insertTemperature(temperature);
+                                temperatureList.add(temperature);
+//                                c.updateProgress(response.length(),i-1);
 
 
                             }
+                            temperatureDataSource.insertTemperatureMany(temperatureList, c);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         } catch (ParseException e) {
@@ -96,6 +101,7 @@ public class RestController {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
                 pf.updateHelloChart();
+                c.resetProgress();
             }
         });
 
@@ -270,7 +276,7 @@ public class RestController {
                         time=sdf.parse(jsonObject.getString("time").substring(0,19));
                         temperature=new Temperature(temp,time);
                         temperatureDataSource.insertTemperature(temperature);
-
+                        c.updateProgress(response.length(),i-1);
 
                     }
                 } catch (JSONException e) {
@@ -280,6 +286,7 @@ public class RestController {
 
                 }
                  Toast.makeText(c,"Daten wurde über WIFI abgerufen",Toast.LENGTH_LONG).show();
+                c.resetProgress();
                 pf.refreshPossibleDates();
                 pf.updateHelloChart();
 
@@ -292,6 +299,7 @@ public class RestController {
                 //temperatureDataSource.clearTable();
                 pf.updateHelloChart();
                 Toast.makeText(c.getBaseContext(),"Daten konnten nicht aktualisiert werden",Toast.LENGTH_LONG).show();
+                c.resetProgress();
             }
         });
         RequestQueue queue= Volley.newRequestQueue(c);
