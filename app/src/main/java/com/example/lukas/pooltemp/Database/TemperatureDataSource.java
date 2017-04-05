@@ -56,7 +56,7 @@ public class TemperatureDataSource {
 
     public Temperature insertTemperature(Temperature temp) {
         count++;
-        System.out.println(count);
+//        System.out.println(count);
         ContentValues values = new ContentValues();
         values.put(SQLiteDBHelper.COLUMN_Date, temp.getTime().getTime());
         values.put(SQLiteDBHelper.COLUMN_TEMP, temp.getTemp());
