@@ -310,8 +310,14 @@ public class TemperatureDataSource {
         Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_Date + " DESC", null);
 
         c.moveToFirst();
+        Temperature t;
+        try{
+            t = new Temperature(round(c.getDouble(2), 1), new java.util.Date(c.getLong(1)), c.getLong(0));
 
-        Temperature t = new Temperature(round(c.getDouble(2), 1), new java.util.Date(c.getLong(1)), c.getLong(0));
+        }
+        catch (Exception e){
+            t=new Temperature(0,new java.util.Date(0));
+        }
 
         //close();
         return t;

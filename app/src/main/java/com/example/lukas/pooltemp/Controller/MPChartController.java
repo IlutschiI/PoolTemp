@@ -41,6 +41,9 @@ public class MPChartController {
 
     public void setData(List<Temperature> temperatureList) {
 
+        if(temperatureList.isEmpty())
+            return;
+
         LineData lineData = new LineData();
 
         ArrayList<Entry> values = new ArrayList<>();

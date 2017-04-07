@@ -33,12 +33,18 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 
+import org.w3c.dom.Text;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import lecho.lib.hellocharts.listener.LineChartOnValueSelectListener;
 import lecho.lib.hellocharts.model.PointValue;
@@ -62,6 +68,7 @@ public class PoolTempFragment extends Fragment {
     TextView tvHighestTemp;
     TextView tvLowestTemp;
     TextView tvAccTemp;
+    TextView tvAmountOfData;
     SeekBar sbTimeStart;
     CardView ttSeekbarEnd;
     SeekBar sbTimeEnd;
@@ -99,8 +106,15 @@ public class PoolTempFragment extends Fragment {
         view = inflater.inflate(R.layout.content_main, container, false);
 
         possibleDates = tempSource.getAllPossibleDates();
-        minDate=possibleDates.get(0);
-        maxDate=possibleDates.get(possibleDates.size()-1);
+        if(!possibleDates.isEmpty()) {
+            minDate = possibleDates.get(0);
+            maxDate = possibleDates.get(possibleDates.size() - 1);
+        }
+        else
+        {
+            minDate=new Date(0);
+            maxDate=new Date(Long.MAX_VALUE);
+        }
 //        initSeekBars();
         initControls();
 
@@ -131,7 +145,7 @@ public class PoolTempFragment extends Fragment {
     public void onResume() {
         super.onResume();
         //tempSource=TemperatureDataSource.getInstance(activity);
-        if (possibleDates.size() != 0)
+        if (possibleDates.size() != 0 && !initSeekbars)
             initSeekBars();
     }
 
@@ -157,7 +171,7 @@ public class PoolTempFragment extends Fragment {
 
     }
 
-    public void updateMPChart(){
+    public void updateMPChart() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -167,7 +181,7 @@ public class PoolTempFragment extends Fragment {
                     initSeekBars();
                 }
 
-                mpChartController.setData(tempSource.getTempsBetween(minDate,maxDate));
+                mpChartController.setData(tempSource.getTempsBetween(minDate, maxDate));
                 //progressDialog.dismiss();
                 setFabEnabled(true);
 
@@ -370,6 +384,8 @@ public class PoolTempFragment extends Fragment {
         tvLowestTemp = (TextView) view.findViewById(R.id.tvLowestTemp);
         tvAccTemp = (TextView) view.findViewById(R.id.tvAccTemp);
         tvYesterdayTemp = (TextView) view.findViewById(R.id.tvYesterdayTemp);
+        tvAmountOfData = (TextView) view.findViewById(R.id.tvAmountOfData);
+
 
         if (pdLoad == null)
             pdLoad = new ProgressDialog(activity);
@@ -449,7 +465,7 @@ public class PoolTempFragment extends Fragment {
         mpChartController = new MPChartController(activity, mpChart);
 
         mpChartController.setData(tempSource.getAllTemperatures());
-        mpChartController.setData(tempSource.getTempsBetween(minDate,maxDate));
+        mpChartController.setData(tempSource.getTempsBetween(minDate, maxDate));
         pdLoad.dismiss();
 
     }
@@ -537,6 +553,17 @@ public class PoolTempFragment extends Fragment {
                 }
                 try {
                     tvYesterdayTemp.setText("" + tempSource.getAverageOfYesterday() + "°C");
+                } catch (Exception e) {
+                    tvYesterdayTemp.setText("N/A");
+                }
+                try {
+                    DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance(Locale.GERMAN);
+                    DecimalFormatSymbols symbols = formatter.getDecimalFormatSymbols();
+
+                    symbols.setGroupingSeparator(' ');
+                    formatter.setDecimalFormatSymbols(symbols);
+
+                    tvAmountOfData.setText("" + formatter.format(tempSource.countEntries()));
                 } catch (Exception e) {
                     tvYesterdayTemp.setText("N/A");
                 }
