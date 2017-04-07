@@ -1,6 +1,8 @@
 package com.example.lukas.pooltemp.RESTController;
 
 import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
 
 import com.android.volley.DefaultRetryPolicy;
@@ -85,8 +87,9 @@ public class RestController {
                         }
                         // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
 
+
+
                         pf.refreshPossibleDates();
-                        pf.initSeekBars();
                         pf.updateHelloChart();
                         c.resetProgress();
                     }
@@ -306,4 +309,8 @@ public class RestController {
         queue.add(request);
     }
 
+    public void runOnUiThread(Runnable r) {
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        mainHandler.post(r);
+    }
 }

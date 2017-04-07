@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteStatement;
+import android.os.Looper;
 import android.widget.Toast;
 
 import com.example.lukas.pooltemp.Activitys.MainActivity;
@@ -30,6 +32,7 @@ public class TemperatureDataSource {
     static int count = 0;
     private SQLiteDatabase database;
     private SQLiteDBHelper dbHelper;
+    SQLiteStatement statement;
     private String[] allColumns = {SQLiteDBHelper.COLUMN_ID, SQLiteDBHelper.COLUMN_TEMP, SQLiteDBHelper.COLUMN_Date};
     private static TemperatureDataSource instance;
 
@@ -46,8 +49,11 @@ public class TemperatureDataSource {
     }
 
     public void open() {
-        if (database == null || !database.isOpen())
+        if (database == null || !database.isOpen()) {
             database = dbHelper.getWritableDatabase();
+            database.rawQuery("PRAGMA synchronous = OFF", null);
+            database.rawQuery("PRAGMA journal_mode = MEMORY", null);
+        }
     }
 
     public void close() {
@@ -73,7 +79,26 @@ public class TemperatureDataSource {
         return temp;
     }
 
-    public List<Temperature> insertTemperatureMany(List<Temperature> temperatureList){
+    public Temperature insertTemperatureWithPreparedStatement(Temperature temp) {
+        count++;
+        open();
+
+        statement.bindDouble(1, temp.getTemp());
+        statement.bindLong(2, temp.getTime().getTime());
+        long rowId = statement.executeInsert();
+//        System.out.println(count);
+//        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " where ROWID=" + String.valueOf(rowId), null);
+//        c.moveToFirst();
+//
+//        temp.setId(c.getLong(0));
+//        c.close();
+        //close();
+
+
+        return temp;
+    }
+
+    public List<Temperature> insertTemperatureMany(List<Temperature> temperatureList) {
         database.beginTransaction();
         for (Temperature temp :
                 temperatureList) {
@@ -84,20 +109,27 @@ public class TemperatureDataSource {
     }
 
     public List<Temperature> insertTemperatureMany(List<Temperature> temperatureList, MainActivity c) {
-
         long startMillis = System.currentTimeMillis();
         database.beginTransaction();
-        int count=0;
+        int count = 0;
+        String sql = "Insert into " + SQLiteDBHelper.TABLE_Temp
+                + " (" + SQLiteDBHelper.COLUMN_TEMP + "," + SQLiteDBHelper.COLUMN_Date + ")"
+                + "VALUES (?,?)";
+        System.out.println(sql);
+        statement = database.compileStatement(sql);
         for (Temperature temp :
                 temperatureList) {
-            temp = insertTemperature(temp);
-            c.updateProgress(temperatureList.size(),count++);
+            temp = insertTemperatureWithPreparedStatement(temp);
+            count++;
+            if (count % 100 == 0)
+                c.updateProgress(temperatureList.size(), count);
         }
         database.setTransactionSuccessful();
         database.endTransaction();
+        database.rawQuery("Create Index 'temperature_date_index' ON '" + SQLiteDBHelper.TABLE_Temp + "' ('" + SQLiteDBHelper.COLUMN_Date + "')", null);
         long endMillis = System.currentTimeMillis();
 
-        System.out.println((endMillis-startMillis)/100);
+        System.out.println((endMillis - startMillis));
 
         return temperatureList;
 
@@ -139,7 +171,7 @@ public class TemperatureDataSource {
     }
 
     public List<Temperature> getTempsBetween(java.util.Date startDate, java.util.Date endDate) {
-        return getTempsBetweenNew(startDate,endDate);
+        return getTempsBetweenNew(startDate, endDate);
 //        List<Temperature> result = new LinkedList<>();
 //        if (startDate == null || endDate == null)
 //            return result;
@@ -200,7 +232,7 @@ public class TemperatureDataSource {
 //        return result;
     }
 
-    public List<Temperature> getTempsBetweenNew(java.util.Date startDate, java.util.Date endDate){
+    public List<Temperature> getTempsBetweenNew(java.util.Date startDate, java.util.Date endDate) {
         List<Temperature> temps = new LinkedList<>();
 
         if (countEntries() == 0)
@@ -210,13 +242,12 @@ public class TemperatureDataSource {
 //        System.out.println(startDate.getTime()+"    "+endDate.getTime());
 
         String query = "Select * from " + SQLiteDBHelper.TABLE_Temp
-                + " where "+  SQLiteDBHelper.COLUMN_Date+"   BETWEEN " + startDate.getTime() + " AND " + "" + endDate.getTime() + ""
+                + " where " + SQLiteDBHelper.COLUMN_Date + "   BETWEEN " + startDate.getTime() + " AND " + "" + endDate.getTime() + ""
                 + " ORDER BY " + SQLiteDBHelper.COLUMN_Date;
 
         System.out.println(query);
 
         Cursor c = database.rawQuery(query, null);
-
 
 
         c.moveToFirst();
@@ -387,10 +418,10 @@ public class TemperatureDataSource {
         return dateList;
     }
 
-    private List<Temperature> minimizeList(List<Temperature>fullList){
+    private List<Temperature> minimizeList(List<Temperature> fullList) {
         Temperature temp1;
         Temperature temp2;
-        List<Temperature> minimizedList=new LinkedList<>();
+        List<Temperature> minimizedList = new LinkedList<>();
         int numberPoints = Settings.getInstance().getPoolSettings().getNumberOfPoints();
         while (fullList.size() >= numberPoints) {
             minimizedList = new LinkedList<>();
@@ -402,7 +433,7 @@ public class TemperatureDataSource {
                     minimizedList.add(temp1);
                 }
             }
-            fullList=minimizedList;
+            fullList = minimizedList;
 /*
             temp1=result.get(0);
             temp2=result.get(1);

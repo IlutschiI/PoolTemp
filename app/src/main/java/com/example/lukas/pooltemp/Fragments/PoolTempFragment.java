@@ -530,8 +530,14 @@ public class PoolTempFragment extends Fragment {
     }
 
     public void refreshPossibleDates() {
-        possibleDates = TempSource.getAllPossibleDates();
-        initSeekBars();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                possibleDates = TempSource.getAllPossibleDates();
+                initSeekBars();
+            }
+        });
     }
 
     private double round(double value, int places) {
