@@ -443,6 +443,8 @@ public class TemperatureDataSource {
             minimizedList.add(temp1);
             */
         }
+        if(minimizedList.size()==0)
+            return fullList;
         return minimizedList;
     }
 }

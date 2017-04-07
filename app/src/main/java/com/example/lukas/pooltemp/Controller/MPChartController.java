@@ -118,12 +118,12 @@ public class MPChartController {
     }
 
     public void zoomOutVertical() {
-        chart.zoomToCenter(0,1-settings.getPoolSettings().getZoomingMultiplier());
+        chart.zoomToCenter(1,1-settings.getPoolSettings().getZoomingMultiplier());
         chart.postInvalidate();
     }
 
     public void zoomVertical() {
-        chart.zoomToCenter(0,1+settings.getPoolSettings().getZoomingMultiplier());
+        chart.zoomToCenter(1,1+settings.getPoolSettings().getZoomingMultiplier());
         chart.postInvalidate();
 
     }
