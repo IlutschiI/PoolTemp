@@ -60,7 +60,7 @@ public class MPChartController {
         chart.setData(lineData);
         chart.setScaleYEnabled(false);
         chart.getLegend().setEnabled(false);
-        chart.animateX(300);
+        chart.animateX(settings.getPoolSettings().getAnimationDuration());
     }
 
     private void configureAxis() {

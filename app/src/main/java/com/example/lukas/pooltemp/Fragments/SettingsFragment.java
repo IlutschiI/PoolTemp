@@ -33,6 +33,7 @@ public class SettingsFragment extends Fragment {
     SeekBar sbZoomMultiplier;
     EditText tvNumberOfPoints;
     TextView tvZoomMultiplier;
+    TextView tvAnimationDuration;
     Settings settings;
     SharedPreferences sharedPreferences;
     SharedPreferences.Editor editor;
@@ -58,6 +59,7 @@ public class SettingsFragment extends Fragment {
         sbZoomMultiplier=(SeekBar)view.findViewById(R.id.sbZoomMultiplier);
         tvZoomMultiplier=(TextView)view.findViewById(R.id.tvZoomMultiplier);
         tvNumberOfPoints=(EditText)view.findViewById(R.id.tvNumberOfPoints);
+        tvAnimationDuration=(EditText)view.findViewById(R.id.tvAnimationDuration);
         sbZoomMultiplier.setMax(50);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
@@ -71,6 +73,7 @@ public class SettingsFragment extends Fragment {
             tvZoomMultiplier.setText((double)progress/10+"x");
 
             tvNumberOfPoints.setText(""+settings.getPoolSettings().getNumberOfPoints());
+            tvAnimationDuration.setText(""+settings.getPoolSettings().getAnimationDuration());
 
         }
 
@@ -93,6 +96,28 @@ public class SettingsFragment extends Fragment {
                     editor.putInt(PoolSettings.NUMBER_OF_POINTS,Integer.parseInt(editable.toString()));
                     editor.commit();
                     settings.getPoolSettings().setNumberOfPoints(Integer.parseInt(editable.toString()));
+                }
+                catch (Exception e){}
+
+            }
+        });
+        tvAnimationDuration.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                try {
+                    editor.putInt(PoolSettings.ANIMATION_DURATION,Integer.parseInt(editable.toString()));
+                    editor.commit();
+                    settings.getPoolSettings().setAnimationDuration(Integer.parseInt(editable.toString()));
                 }
                 catch (Exception e){}
 
@@ -159,5 +184,6 @@ public class SettingsFragment extends Fragment {
         settings.getPoolSettings().setyAxisEnabled(sharedPreferences.getBoolean(PoolSettings.YAXIS_ENABLED,true));
         settings.getPoolSettings().setZoomingMultiplier(sharedPreferences.getFloat(PoolSettings.ZOOMING_MULTIPLIER,10));
         settings.getPoolSettings().setNumberOfPoints(sharedPreferences.getInt(PoolSettings.NUMBER_OF_POINTS,50));
+        settings.getPoolSettings().setAnimationDuration(sharedPreferences.getInt(PoolSettings.ANIMATION_DURATION,300));
     }
 }
