@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_column="0"
+    android:layout_margin="2dp"
+    card_view:cardBackgroundColor="#FFFFFF"
+    card_view:cardCornerRadius="2dp">
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+
+
+            <com.github.mikephil.charting.charts.LineChart xmlns:chart="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/mpLinechart"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:layout_gravity="bottom"
+                android:layout_marginBottom="0dp"
+                android:layout_marginLeft="7dp"
+                android:layout_marginRight="7dp"
+                android:layout_marginTop="7dp"
+                android:background="#ffffff"
+                android:paddingRight="0dp"
+                chart:chart_axisColor="#757575"
+                chart:chart_labelColor="#757575">
+
+            </com.github.mikephil.charting.charts.LineChart>
+            <ImageButton
+                android:layout_width="wrap_content"
+
+                android:id="@+id/ib_zoom"
+
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_zoom_in"
+                android:tint="#757575"
+                android:layout_alignParentEnd="true"
+
+                android:layout_alignParentRight="true" />
+
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:id="@+id/ib_zoom_out"
+                android:layout_marginRight="50dp"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_zoom_out"
+                android:tint="#757575"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true" />
+        </RelativeLayout>
+
+
+
+        <SeekBar
+            android:id="@+id/sbTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginBottom="40dp"
+            android:layout_marginLeft="7dp"
+            android:layout_marginRight="7dp"
+            android:layout_marginTop="7dp"
+            android:maxHeight="2dp"
+            android:progress="20"
+            android:progressDrawable="@drawable/seekbar_mindate" />
+    </LinearLayout>
+
+
+    <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/ttSeekbar"
+        android:layout_width="75dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="78dp"
+        android:visibility="invisible"
+        card_view:cardBackgroundColor="#CCBDBDBD"
+        card_view:cardCornerRadius="8dp"
+        card_view:cardElevation="0dp">
+
+        <TextView
+            android:id="@+id/ttSeekbarValue"
+            android:layout_width="75dp"
+            android:layout_height="20dp"
+            android:text=""
+            android:textAlignment="center" />
+
+    </android.support.v7.widget.CardView>
+
+
+    <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/ttSeekbarEnd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_marginBottom="40dp"
+        android:visibility="invisible"
+        card_view:cardBackgroundColor="#CCBDBDBD"
+        card_view:cardCornerRadius="8dp"
+        card_view:cardElevation="0dp">
+
+        <TextView
+            android:id="@+id/ttSeekbarEndValue"
+            android:layout_width="75dp"
+            android:layout_height="20dp"
+            android:text="23:59"
+            android:textAlignment="center" />
+
+    </android.support.v7.widget.CardView>
+
+    <SeekBar
+        android:id="@+id/sbTimeEnd"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="7dp"
+        android:layout_marginLeft="7dp"
+        android:layout_marginRight="7dp"
+        android:layout_marginTop="7dp"
+        android:maxHeight="2dp"
+        android:progress="30"
+        android:progressDrawable="@drawable/seekbar_progress"
+        android:rotation="0" />
+
+
+</android.support.v7.widget.CardView>
+

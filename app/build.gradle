@@ -34,4 +34,5 @@ dependencies {
     compile 'br.com.zbra:android-linq:1.0.1'
     compile 'com.mcxiaoke.volley:library:1.0.19'
     compile 'com.github.lecho:hellocharts-library:1.5.8@aar'
+    compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
 }

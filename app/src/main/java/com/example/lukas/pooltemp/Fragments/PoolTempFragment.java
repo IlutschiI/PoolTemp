@@ -23,10 +23,15 @@ import android.widget.TextView;
 import com.example.lukas.pooltemp.Activitys.MainActivity;
 import com.example.lukas.pooltemp.Adapter.LockableScrollView;
 import com.example.lukas.pooltemp.Controller.HelloChartController;
+import com.example.lukas.pooltemp.Controller.MPChartController;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Model.Temperature;
 import com.example.lukas.pooltemp.R;
 import com.example.lukas.pooltemp.RESTController.RestController;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -46,7 +51,9 @@ public class PoolTempFragment extends Fragment {
     HelloChartController helloController;
     MainActivity activity;
     lecho.lib.hellocharts.view.LineChartView helloChart;
-    TemperatureDataSource TempSource;
+    LineChart mpChart;
+    MPChartController mpChartController;
+    TemperatureDataSource tempSource;
     boolean initSeekbars = false;
     List<Date> possibleDates;
     Date minDate;
@@ -77,7 +84,7 @@ public class PoolTempFragment extends Fragment {
         activity = MainActivity.instance;
         instance = this;
         if (activity != null)
-            TempSource = TemperatureDataSource.getInstance(activity);
+            tempSource = TemperatureDataSource.getInstance(activity);
     }
 
 
@@ -87,36 +94,18 @@ public class PoolTempFragment extends Fragment {
 
         if (activity == null) {
             activity = MainActivity.instance;
-            TempSource = TemperatureDataSource.getInstance(activity);
+            tempSource = TemperatureDataSource.getInstance(activity);
         }
         view = inflater.inflate(R.layout.content_main, container, false);
 
-        possibleDates = TempSource.getAllPossibleDates();
+        possibleDates = tempSource.getAllPossibleDates();
+        minDate=possibleDates.get(0);
+        maxDate=possibleDates.get(possibleDates.size()-1);
+//        initSeekBars();
+        initControls();
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                initControls();
 
-                helloController = new HelloChartController(activity, helloChart);
-                if (temps == null || temps.size() == 0)
-                    temps = TempSource.getAllTemperatures();
-                try {
-                    Thread.currentThread().sleep(350);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                /*runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        helloController.setData(temps);
-                    }
-                });*/
-                helloController.setData(temps);
-                updateHelloChart();
-                //progressDialog.dismiss();
-            }
-        }).start();
+        //progressDialog.dismiss();
 
 
         fab = (FloatingActionButton) view.findViewById(R.id.fab);    //FloatingActionButton
@@ -128,10 +117,12 @@ public class PoolTempFragment extends Fragment {
                 fab.setEnabled(false);
                 //progressDialog.show();
                 activity.updateProgress(-1, 0);
-                RestController.getTempsSince(activity, TempSource.getActualTemperature().getTime(), instance);
+                RestController.getTempsSince(activity, tempSource.getActualTemperature().getTime(), instance);
 
             }
         });
+
+        setInfoCardText();
 
         return view;
     }
@@ -139,7 +130,7 @@ public class PoolTempFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        //TempSource=TemperatureDataSource.getInstance(activity);
+        //tempSource=TemperatureDataSource.getInstance(activity);
         if (possibleDates.size() != 0)
             initSeekBars();
     }
@@ -149,12 +140,12 @@ public class PoolTempFragment extends Fragment {
             @Override
             public void run() {
                 setInfoCardText();
-                possibleDates = TempSource.getAllPossibleDates();
+                possibleDates = tempSource.getAllPossibleDates();
                 if (!initSeekbars && possibleDates.size() != 0) {
                     initSeekBars();
                 }
 
-                possibleDates = TempSource.getAllPossibleDates();
+                possibleDates = tempSource.getAllPossibleDates();
                 helloController.setStartEndOfData(minDate, maxDate);
                 //progressDialog.dismiss();
                 setFabEnabled(true);
@@ -166,12 +157,33 @@ public class PoolTempFragment extends Fragment {
 
     }
 
+    public void updateMPChart(){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setInfoCardText();
+                possibleDates = tempSource.getAllPossibleDates();
+                if (!initSeekbars && possibleDates.size() != 0) {
+                    initSeekBars();
+                }
+
+                mpChartController.setData(tempSource.getTempsBetween(minDate,maxDate));
+                //progressDialog.dismiss();
+                setFabEnabled(true);
+
+                pdLoad.dismiss();
+                System.out.println("----------------------------Chart Updated--------------------------");
+            }
+        });
+    }
+
+
     public void initSeekBars() {
         initSeekbars = true;
         ttSeekbar = (CardView) view.findViewById(R.id.ttSeekbar);
         sbTimeStart = (SeekBar) view.findViewById(R.id.sbTime);
 
-        sbTimeStart.setMax(TempSource.getDateRange());
+        sbTimeStart.setMax(tempSource.getDateRange());
         sbTimeStart.incrementProgressBy(1);
         sbTimeStart.setProgress(0);
         Calendar calendar = Calendar.getInstance();
@@ -253,7 +265,7 @@ public class PoolTempFragment extends Fragment {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        updateHelloChart();
+                        updateMPChart();
                     }
                 }).start();
             }
@@ -268,9 +280,9 @@ public class PoolTempFragment extends Fragment {
         maxDate = calendar.getTime();
         ((TextView) ttSeekbarEnd.findViewById(R.id.ttSeekbarEndValue)).setText(sdf.format(calendar.getTime()));
         sbTimeEnd = (SeekBar) view.findViewById(R.id.sbTimeEnd);
-        sbTimeEnd.setMax(TempSource.getDateRange());
+        sbTimeEnd.setMax(tempSource.getDateRange());
         sbTimeEnd.incrementProgressBy(1);
-        sbTimeEnd.setProgress(TempSource.getDateRange());
+        sbTimeEnd.setProgress(tempSource.getDateRange());
         sbTimeEnd.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -342,7 +354,7 @@ public class PoolTempFragment extends Fragment {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        updateHelloChart();
+                        updateMPChart();
                     }
                 }).start();
             }
@@ -358,46 +370,17 @@ public class PoolTempFragment extends Fragment {
         tvLowestTemp = (TextView) view.findViewById(R.id.tvLowestTemp);
         tvAccTemp = (TextView) view.findViewById(R.id.tvAccTemp);
         tvYesterdayTemp = (TextView) view.findViewById(R.id.tvYesterdayTemp);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (pdLoad == null)
-                    pdLoad = new ProgressDialog(activity);
-                pdLoad.setIndeterminate(true);
-                pdLoad.setTitle("Bitte Warten");
-                pdLoad.setMessage("Daten werden geladen...");
-                pdLoad.show();
-            }
-        });
+
+        if (pdLoad == null)
+            pdLoad = new ProgressDialog(activity);
+        pdLoad.setIndeterminate(true);
+        pdLoad.setTitle("Bitte Warten");
+        pdLoad.setMessage("Daten werden geladen...");
+        pdLoad.show();
 
 
-        helloChart = (lecho.lib.hellocharts.view.LineChartView) view.findViewById(R.id.helloLinechart);
-        helloChart.setOnValueTouchListener(new LineChartOnValueSelectListener() {
-            @Override
-            public void onValueSelected(int lineIndex, int pointIndex, PointValue value) {
-                Temperature accTemp = new Temperature(value.getY(), new Date((long) value.getX()));
-                setSelectedPointCardText(accTemp);
-            }
-
-            @Override
-            public void onValueDeselected() {
-
-            }
-        });
-
-
-        helloChart.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL || motionEvent.getAction() != MotionEvent.ACTION_UP)
-                    isScrollable = false;
-                else
-                    isScrollable = true;
-                scrollView.setScrollable(isScrollable);
-                return false;
-            }
-        });
-
+//        initalizeHelloChart();
+        initializeMPChart();
 
         scrollView = ((LockableScrollView) view.findViewById(R.id.scrollview));
         scrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
@@ -419,27 +402,11 @@ public class PoolTempFragment extends Fragment {
             }
         });
 
-/*
-        fab = (FloatingActionButton) view.findViewById(R.id.fab);    //FloatingActionButton
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {                      //Onclicklistener des FloatingActionButtons
-                //if (!controller.isanimating())
-                //   controller.addPoint(new Point("", 25));
-                fab.setEnabled(false);
-               //progressDialog.show();
-
-                RestController.getTempsSince(activity, TempSource.getActualTemperature().getTime(),instance);
-
-            }
-        });
-*/
-
         ib_zoom = (ImageButton) view.findViewById(R.id.ib_zoom);
         ib_zoom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                helloController.zoomVertical();
+                mpChartController.zoomVertical();
             }
         });
 
@@ -447,11 +414,79 @@ public class PoolTempFragment extends Fragment {
         ib_zoomOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                helloController.zoomOutVertical();
+                mpChartController.zoomOutVertical();
+            }
+        });
+    }
+
+    private void initializeMPChart() {
+        mpChart = (LineChart) view.findViewById(R.id.mpLinechart);
+        mpChart.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL || motionEvent.getAction() != MotionEvent.ACTION_UP)
+                    isScrollable = false;
+                else
+                    isScrollable = true;
+                scrollView.setScrollable(isScrollable);
+                return false;
             }
         });
 
-        //initSeekBars();
+        mpChart.setOnChartValueSelectedListener(new OnChartValueSelectedListener() {
+            @Override
+            public void onValueSelected(Entry e, Highlight h) {
+                Temperature accTemp = new Temperature(e.getY(), new Date((long) e.getX()));
+                setSelectedPointCardText(accTemp);
+            }
+
+            @Override
+            public void onNothingSelected() {
+
+            }
+        });
+
+        mpChartController = new MPChartController(activity, mpChart);
+
+        mpChartController.setData(tempSource.getAllTemperatures());
+        mpChartController.setData(tempSource.getTempsBetween(minDate,maxDate));
+        pdLoad.dismiss();
+
+    }
+
+    private void initalizeHelloChart() {
+        helloChart = (lecho.lib.hellocharts.view.LineChartView) view.findViewById(R.id.helloLinechart);
+        helloChart.setOnValueTouchListener(new LineChartOnValueSelectListener() {
+            @Override
+            public void onValueSelected(int lineIndex, int pointIndex, PointValue value) {
+                Temperature accTemp = new Temperature(value.getY(), new Date((long) value.getX()));
+                setSelectedPointCardText(accTemp);
+            }
+
+            @Override
+            public void onValueDeselected() {
+                setSelectedPointCardText(null);
+            }
+        });
+
+        helloController = new HelloChartController(activity, helloChart);
+        if (temps == null || temps.size() == 0)
+            temps = tempSource.getAllTemperatures();
+        helloController.setData(temps);
+        updateMPChart();
+
+
+        helloChart.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL || motionEvent.getAction() != MotionEvent.ACTION_UP)
+                    isScrollable = false;
+                else
+                    isScrollable = true;
+                scrollView.setScrollable(isScrollable);
+                return false;
+            }
+        });
     }
 
     /*
@@ -484,24 +519,24 @@ public class PoolTempFragment extends Fragment {
             @Override
             public void run() {
                 try {
-                    tvHighestTemp.setText("" + TempSource.getHighestTemperature().getTemp() + "°C");
+                    tvHighestTemp.setText("" + tempSource.getHighestTemperature().getTemp() + "°C");
                 } catch (Exception e) {
                     tvHighestTemp.setText("N/A");
                 }
 
                 try {
-                    tvLowestTemp.setText("" + TempSource.getLowestTemperature().getTemp() + "°C");
+                    tvLowestTemp.setText("" + tempSource.getLowestTemperature().getTemp() + "°C");
                 } catch (Exception e) {
                     tvLowestTemp.setText("N/A");
                 }
 
                 try {
-                    tvAccTemp.setText("" + TempSource.getActualTemperature().getTemp() + "°C");
+                    tvAccTemp.setText("" + tempSource.getActualTemperature().getTemp() + "°C");
                 } catch (Exception e) {
                     tvAccTemp.setText("N/A");
                 }
                 try {
-                    tvYesterdayTemp.setText("" + TempSource.getAverageOfYesterday() + "°C");
+                    tvYesterdayTemp.setText("" + tempSource.getAverageOfYesterday() + "°C");
                 } catch (Exception e) {
                     tvYesterdayTemp.setText("N/A");
                 }
@@ -534,7 +569,7 @@ public class PoolTempFragment extends Fragment {
             @Override
             public void run() {
 
-                possibleDates = TempSource.getAllPossibleDates();
+                possibleDates = tempSource.getAllPossibleDates();
                 initSeekBars();
             }
         });

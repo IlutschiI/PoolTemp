@@ -1,6 +1,5 @@
 package com.example.lukas.pooltemp.RESTController;
 
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
@@ -51,7 +50,7 @@ public class RestController {
                         temperatureDataSource.clearTable();
 
                         if(response.length()==0) {
-                            pf.updateHelloChart();
+                            pf.updateMPChart();
                             return;
                         }
 
@@ -90,7 +89,7 @@ public class RestController {
 
 
                         pf.refreshPossibleDates();
-                        pf.updateHelloChart();
+                        pf.updateMPChart();
                         c.resetProgress();
                     }
                 }).start();
@@ -103,7 +102,7 @@ public class RestController {
             public void onErrorResponse(VolleyError error) {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
-                pf.updateHelloChart();
+                pf.updateMPChart();
                 c.resetProgress();
             }
         });
@@ -124,7 +123,7 @@ public class RestController {
                         //temperatureDataSource.clearTable();
 
                         if(response.length()==0) {
-                            pf.updateHelloChart();
+                            pf.updateMPChart();
                             return;
                         }
 
@@ -157,7 +156,7 @@ public class RestController {
                         }
                         // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
                         pf.refreshPossibleDates();
-                        pf.updateHelloChart();
+                        pf.updateMPChart();
                         c.resetProgress();
                     }
                 }).start();
@@ -171,7 +170,7 @@ public class RestController {
             public void onErrorResponse(VolleyError error) {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
-                //c.updateHelloChart();
+                //c.updateMPChart();
                 Toast.makeText(c.getBaseContext(),"Daten konnten nicht aktualisiert werden \n Daten werden über Wifi abgerufen",Toast.LENGTH_LONG).show();
                 getTempsSinceOverWifi(c, lastDate,pf);
             }
@@ -192,7 +191,7 @@ public class RestController {
 
 
                         if(response.length()==0) {
-                            pf.updateHelloChart();
+                            pf.updateMPChart();
                             return;
                         }
 
@@ -225,7 +224,7 @@ public class RestController {
 
                         }
                         // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
-                        pf.updateHelloChart();
+                        pf.updateMPChart();
                         c.resetProgress();
                     }
                 }).start();
@@ -239,7 +238,7 @@ public class RestController {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
                 pf.refreshPossibleDates();
-                pf.updateHelloChart();
+                pf.updateMPChart();
                 c.resetProgress();
             }
         });
@@ -258,7 +257,7 @@ public class RestController {
                 //temperatureDataSource.clearTable();
 
                 if(response.length()==0) {
-                    pf.updateHelloChart();
+                    pf.updateMPChart();
                     return;
                 }
 
@@ -291,7 +290,7 @@ public class RestController {
                  Toast.makeText(c,"Daten wurde über WIFI abgerufen",Toast.LENGTH_LONG).show();
                 c.resetProgress();
                 pf.refreshPossibleDates();
-                pf.updateHelloChart();
+                pf.updateMPChart();
 
 
             }
@@ -300,7 +299,7 @@ public class RestController {
             public void onErrorResponse(VolleyError error) {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
-                pf.updateHelloChart();
+                pf.updateMPChart();
                 Toast.makeText(c.getBaseContext(),"Daten konnten nicht aktualisiert werden",Toast.LENGTH_LONG).show();
                 c.resetProgress();
             }
