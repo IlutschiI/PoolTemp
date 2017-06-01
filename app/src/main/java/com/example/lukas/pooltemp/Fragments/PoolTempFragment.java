@@ -144,8 +144,10 @@ public class PoolTempFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        System.out.println("################################ On Resume #########################");
         //tempSource=TemperatureDataSource.getInstance(activity);
-        if (possibleDates.size() != 0 && !initSeekbars)
+        if (possibleDates.size() != 0)
             initSeekBars();
     }
 

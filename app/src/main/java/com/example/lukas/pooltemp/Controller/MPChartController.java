@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by wicki on 07.04.2017.
@@ -41,7 +42,7 @@ public class MPChartController {
 
     public void setData(List<Temperature> temperatureList) {
 
-        if(temperatureList.isEmpty())
+        if (temperatureList.isEmpty())
             return;
 
         LineData lineData = new LineData();
@@ -54,8 +55,14 @@ public class MPChartController {
         }
 
         LineDataSet lineDataSet = configureLineDataSet(values);
-
-        configureAxis();
+        boolean withinOneDay=true;
+        if(temperatureList.size()>1)
+        {
+            long diff=temperatureList.get(temperatureList.size()-1).getTime().getTime()-temperatureList.get(0).getTime().getTime();
+            System.out.println("########################################"+temperatureList.get(0).getTime().toString());
+            withinOneDay=TimeUnit.MILLISECONDS.toHours(diff)<=24;
+        }
+        configureAxis(!withinOneDay);
 
         lineData.addDataSet(lineDataSet);
 
@@ -66,9 +73,9 @@ public class MPChartController {
         chart.animateX(settings.getPoolSettings().getAnimationDuration());
     }
 
-    private void configureAxis() {
-        configureXAxis(chart);
+    private void configureAxis(boolean dayFormat) {
         configureYAxis();
+        configureXAxis(chart,dayFormat);
     }
 
     private void configureYAxis() {
@@ -76,7 +83,7 @@ public class MPChartController {
         chart.getAxisRight().setEnabled(false);
     }
 
-    private void configureXAxis(LineChart chart) {
+    private void configureXAxis(LineChart chart, boolean dayFormat) {
         XAxis xAxis = chart.getXAxis();
 
         xAxis.setEnabled(settings.getPoolSettings().isxAxisEnabled());
@@ -85,8 +92,8 @@ public class MPChartController {
 //        xAxis.setLabelRotationAngle(45);
 //        xAxis.setSpaceMax(5);
 //        xAxis.setXOffset(100);
-        xAxis.setLabelCount(5,true);
-        xAxis.setValueFormatter(new IAxisValueFormatter() {
+        xAxis.setLabelCount(5, true);
+        IAxisValueFormatter xAxisDayFormat = new IAxisValueFormatter() {
 
             private SimpleDateFormat mFormat = new SimpleDateFormat("dd.MM.yyyy");
 
@@ -94,7 +101,22 @@ public class MPChartController {
             public String getFormattedValue(float value, AxisBase axis) {
                 return mFormat.format(new Date((long) value));
             }
-        });
+        };
+
+        IAxisValueFormatter xAxisHourFormat = new IAxisValueFormatter() {
+
+            private SimpleDateFormat mFormat = new SimpleDateFormat("HH:mm");
+
+            @Override
+            public String getFormattedValue(float value, AxisBase axis) {
+                return mFormat.format(new Date((long) value));
+            }
+        };
+
+        if (dayFormat)
+            xAxis.setValueFormatter(xAxisDayFormat);
+        else
+            xAxis.setValueFormatter(xAxisHourFormat);
     }
 
     @NonNull
@@ -121,12 +143,12 @@ public class MPChartController {
     }
 
     public void zoomOutVertical() {
-        chart.zoomToCenter(1,1-settings.getPoolSettings().getZoomingMultiplier());
+        chart.zoomToCenter(1, 1 - settings.getPoolSettings().getZoomingMultiplier());
         chart.postInvalidate();
     }
 
     public void zoomVertical() {
-        chart.zoomToCenter(1,1+settings.getPoolSettings().getZoomingMultiplier());
+        chart.zoomToCenter(1, 1 + settings.getPoolSettings().getZoomingMultiplier());
         chart.postInvalidate();
 
     }

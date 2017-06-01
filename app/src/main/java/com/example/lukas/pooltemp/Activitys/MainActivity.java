@@ -61,7 +61,6 @@ public class MainActivity extends AppCompatActivity
         settingsFragment = new SettingsFragment();
         //updating the stored Settings
         settingsFragment.updateSettings();
-        boolean hideProgressbar = false;
 
         //Set the first Fragment (default PoolTempFragment)
         fm = getSupportFragmentManager();
@@ -70,48 +69,8 @@ public class MainActivity extends AppCompatActivity
         ft.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
         ft.commit();
 
-
-        //settingsActivity=new SettingsActivity(instance);
-        //settingsActivity.updateSettings();
-        //if(Settings.getInstance().getPoolSettings().getNumberOfPoints()==0)
-        //   Settings.getInstance().getPoolSettings().setNumberOfPoints(100);
-
         //Loading Data from the Server when no Data is available
-        TempSource = TemperatureDataSource.getInstance(this);
-        if (TempSource.countEntries() != 0) {
-            hideProgressbar = true;
-            //RestController.getTempsSince(instance, TempSource.getActualTemperature().getTime());
-        } else {
-            RestController.getAllTemps(instance, poolFragment);
-            // try {
-            //     Thread.currentThread().sleep(10000);
-            // } catch (InterruptedException e) {
-            //     e.printStackTrace();
-            // }
-        }
-
-        //System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!before all Dates");
-
-        //Calculating all possible Dates for the Seekbars
-        possibleDates = TempSource.getAllPossibleDates();
-
-
-        //initializing the progressDialog
-        progressDialog = new AlertDialog.Builder(this).setTitle("Bitte warten")
-                .setView(R.layout.progress_dialog_progress)
-                .setCancelable(false)
-                .create();
-        progressDialog.show();
-        progress = (ProgressBar) progressDialog.findViewById(R.id.pbProgressDialogProgress);
-        progressText = (TextView) progressDialog.findViewById(R.id.tvProgressDialogProgress);
-        progress.setMax(11);
-        progress.setIndeterminate(false);
-
-        progress.setProgress(10);
-        progress.setProgress(0);
-        if (hideProgressbar)
-            progressDialog.dismiss();
-
+        loadDataOnFirstStart();
 
         //setting the Toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -124,8 +83,34 @@ public class MainActivity extends AppCompatActivity
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
+        initializeProgressDialog();
+
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    private void initializeProgressDialog() {
+        progressDialog = new AlertDialog.Builder(this).setTitle("Bitte warten")
+                .setView(R.layout.progress_dialog_progress)
+                .setCancelable(false)
+                .create();
+        progressDialog.show();
+        progress = (ProgressBar) progressDialog.findViewById(R.id.pbProgressDialogProgress);
+        progressText = (TextView) progressDialog.findViewById(R.id.tvProgressDialogProgress);
+        progress.setMax(11);
+        progress.setIndeterminate(false);
+
+        progress.setProgress(10);
+        progress.setProgress(0);
+        resetProgress();
+    }
+
+    private void loadDataOnFirstStart() {
+        TempSource = TemperatureDataSource.getInstance(this);
+        if (TempSource.countEntries() != 0) {
+        } else {
+            RestController.getAllTemps(instance, poolFragment);
+        }
     }
 
     //Updating the Values of the ProgressDialog
@@ -242,6 +227,7 @@ public class MainActivity extends AppCompatActivity
             ft.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
             ft.addToBackStack(null);
             ft.replace(R.id.fragmentFrame, poolFragment, "PoolTempFragment");
+            poolFragment.refreshPossibleDates();
 
 
         } else if (id == R.id.nav_gallery) {
