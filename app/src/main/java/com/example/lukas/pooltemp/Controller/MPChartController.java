@@ -80,6 +80,8 @@ public class MPChartController {
 
     private void configureYAxis() {
         chart.getAxisLeft().setEnabled(settings.getPoolSettings().isyAxisEnabled());
+        chart.getAxisLeft().setAxisMinimum(0);
+        chart.getAxisLeft().setAxisMaximum(40);
         chart.getAxisRight().setEnabled(false);
     }
 
@@ -130,6 +132,7 @@ public class MPChartController {
         lineDataSet.setValueTextSize(0f);
         lineDataSet.setDrawCircleHole(false);
         lineDataSet.setHighlightEnabled(true);
+
 
         if (settings.getPoolSettings().isCubicCurves())
             lineDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
