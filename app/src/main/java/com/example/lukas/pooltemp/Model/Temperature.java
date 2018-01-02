@@ -7,27 +7,36 @@ import java.util.Date;
  */
 public class Temperature {
 
-    private double temp;
-    private Date time;
     private long id;
+    private double temperature;
+    private Date time;
+    private String sensorID;
 
-    public Temperature(double temp, Date time) {
-        this.temp = temp;
+    public Temperature(double temperature, Date time) {
+        this.temperature = temperature;
         this.time = time;
     }
 
-    public Temperature(double temp, Date time, long id) {
-        this.temp = temp;
+    public Temperature(double temperature, Date time, long id) {
+        this.temperature = temperature;
         this.time = time;
         this.id = id;
     }
 
-    public double getTemp() {
-        return temp;
+    public String getSensorID() {
+        return sensorID;
     }
 
-    public void setTemp(double temp) {
-        this.temp = temp;
+    public void setSensorID(String sensorID) {
+        this.sensorID = sensorID;
+    }
+
+    public double getTemperature() {
+        return temperature;
+    }
+
+    public void setTemperature(double temperature) {
+        this.temperature = temperature;
     }
 
     public Date getTime() {
@@ -48,6 +57,6 @@ public class Temperature {
 
     @Override
     public String toString() {
-        return time.toString()+"   "+temp;
+        return time.toString()+"   "+ temperature;
     }
 }

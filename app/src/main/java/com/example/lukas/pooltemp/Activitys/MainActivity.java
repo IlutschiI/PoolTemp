@@ -20,15 +20,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Fragments.PoolTempFragment;
 import com.example.lukas.pooltemp.Fragments.SettingsFragment;
 import com.example.lukas.pooltemp.Model.Temperature;
 import com.example.lukas.pooltemp.R;
 import com.example.lukas.pooltemp.RESTController.RestController;
+import com.example.lukas.pooltemp.RESTController.TemperatureRestController;
 import com.example.lukas.pooltemp.Settings.Settings;
 
+import org.json.JSONArray;
+
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -39,14 +46,13 @@ public class MainActivity extends AppCompatActivity
 
     TemperatureDataSource TempSource;
     public static MainActivity instance;
-    boolean poolScreen = true;
-    List<Date> possibleDates;
     ProgressBar progress;
     AlertDialog progressDialog;
     TextView progressText;
     FragmentManager fm;
     PoolTempFragment poolFragment;
     SettingsFragment settingsFragment;
+    TemperatureRestController temperatureRestController;
 
 
     @Override
@@ -55,6 +61,7 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         instance = this;
+        temperatureRestController=new TemperatureRestController(this.getApplicationContext());
 
         //creating the Fragments
         poolFragment = new PoolTempFragment();
@@ -109,7 +116,19 @@ public class MainActivity extends AppCompatActivity
         TempSource = TemperatureDataSource.getInstance(this);
         if (TempSource.countEntries() != 0) {
         } else {
-            RestController.getAllTemps(instance, poolFragment);
+            temperatureRestController.getAllTemps(new Response.Listener<Temperature[]>() {
+                @Override
+                public void onResponse(Temperature[] response) {
+                    TempSource.insertTemperatureMany(Arrays.asList(response),instance);
+                    poolFragment.updateMPChart();
+                    poolFragment.refreshPossibleDates();
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Toast.makeText(instance, "somewthing went wrong", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 
@@ -199,7 +218,21 @@ public class MainActivity extends AppCompatActivity
         //Reloading all Temperatures from the Server
         if (id == R.id.action_reload) {
             progressDialog.show();
-            RestController.getAllTemps(instance, poolFragment);
+            temperatureRestController.getAllTemps(new Response.Listener<Temperature[]>() {
+                @Override
+                public void onResponse(Temperature[] response) {
+                    TempSource.clearTable();
+                    TempSource.insertTemperatureMany(Arrays.asList(response),instance);
+                    poolFragment.updateMPChart();
+                    poolFragment.refreshPossibleDates();
+                    resetProgress();
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Toast.makeText(instance, "somewthing went wrong", Toast.LENGTH_SHORT).show();
+                }
+            });
             return true;
         }
         //force the Server to read a new Tmeperature

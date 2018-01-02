@@ -19,7 +19,10 @@ import android.view.ViewTreeObserver;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.example.lukas.pooltemp.Activitys.MainActivity;
 import com.example.lukas.pooltemp.Adapter.LockableScrollView;
 import com.example.lukas.pooltemp.Controller.HelloChartController;
@@ -28,12 +31,11 @@ import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Model.Temperature;
 import com.example.lukas.pooltemp.R;
 import com.example.lukas.pooltemp.RESTController.RestController;
+import com.example.lukas.pooltemp.RESTController.TemperatureRestController;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
-
-import org.w3c.dom.Text;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -41,6 +43,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -85,11 +88,13 @@ public class PoolTempFragment extends Fragment {
     List<Temperature> temps;
 
     View view;
+    TemperatureRestController temperatureRestController;
 
 
     public PoolTempFragment() {
         activity = MainActivity.instance;
         instance = this;
+        temperatureRestController=new TemperatureRestController(activity.getApplicationContext());
         if (activity != null)
             tempSource = TemperatureDataSource.getInstance(activity);
     }
@@ -106,14 +111,12 @@ public class PoolTempFragment extends Fragment {
         view = inflater.inflate(R.layout.content_main, container, false);
 
         possibleDates = tempSource.getAllPossibleDates();
-        if(!possibleDates.isEmpty()) {
+        if (!possibleDates.isEmpty()) {
             minDate = possibleDates.get(0);
             maxDate = possibleDates.get(possibleDates.size() - 1);
-        }
-        else
-        {
-            minDate=new Date(0);
-            maxDate=new Date(Long.MAX_VALUE);
+        } else {
+            minDate = new Date(0);
+            maxDate = new Date(Long.MAX_VALUE);
         }
 //        initSeekBars();
         initControls();
@@ -126,12 +129,23 @@ public class PoolTempFragment extends Fragment {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {                      //Onclicklistener des FloatingActionButtons
-                //if (!controller.isanimating())
-                //   controller.addPoint(new Point("", 25));
                 fab.setEnabled(false);
-                //progressDialog.show();
                 activity.updateProgress(-1, 0);
-                RestController.getTempsSince(activity, tempSource.getActualTemperature().getTime(), instance);
+                Date lastDate = tempSource.getActualTemperature().getTime();
+                temperatureRestController.getTempsSince(lastDate, new Response.Listener<Temperature[]>() {
+                    @Override
+                    public void onResponse(Temperature[] response) {
+                        tempSource.insertTemperatureMany(Arrays.asList(response), activity);
+                        activity.resetProgress();
+                        setInfoCardText();
+                        updateMPChart();
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(activity, "somewthing went wrong", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
             }
         });
@@ -537,19 +551,19 @@ public class PoolTempFragment extends Fragment {
             @Override
             public void run() {
                 try {
-                    tvHighestTemp.setText("" + tempSource.getHighestTemperature().getTemp() + "°C");
+                    tvHighestTemp.setText("" + tempSource.getHighestTemperature().getTemperature() + "°C");
                 } catch (Exception e) {
                     tvHighestTemp.setText("N/A");
                 }
 
                 try {
-                    tvLowestTemp.setText("" + tempSource.getLowestTemperature().getTemp() + "°C");
+                    tvLowestTemp.setText("" + tempSource.getLowestTemperature().getTemperature() + "°C");
                 } catch (Exception e) {
                     tvLowestTemp.setText("N/A");
                 }
 
                 try {
-                    tvAccTemp.setText("" + tempSource.getActualTemperature().getTemp() + "°C");
+                    tvAccTemp.setText("" + tempSource.getActualTemperature().getTemperature() + "°C");
                 } catch (Exception e) {
                     tvAccTemp.setText("N/A");
                 }
@@ -583,7 +597,7 @@ public class PoolTempFragment extends Fragment {
             return;
         }
 
-        ((TextView) view.findViewById(R.id.tvSelctedTemp)).setText(round(acc.getTemp(), 1) + "°C");
+        ((TextView) view.findViewById(R.id.tvSelctedTemp)).setText(round(acc.getTemperature(), 1) + "°C");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
         ((TextView) view.findViewById(R.id.tvSelctedTempTime)).setText(simpleDateFormat.format(acc.getTime()));
     }
@@ -599,7 +613,9 @@ public class PoolTempFragment extends Fragment {
             public void run() {
 
                 possibleDates = tempSource.getAllPossibleDates();
-                initSeekBars();
+                if (!possibleDates.isEmpty()) {
+                    initSeekBars();
+                }
             }
         });
     }

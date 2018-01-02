@@ -9,6 +9,7 @@
 
     <item
         android:id="@+id/action_forceTemperature"
+        android:enabled="false"
         android:orderInCategory="100"
         android:title="aktuelle Temperature anfordern"
         app:showAsAction="never" />

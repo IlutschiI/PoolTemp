@@ -6,7 +6,6 @@ import android.content.Context;
 import android.widget.RemoteViews;
 
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
-import com.example.lukas.pooltemp.RESTController.RestController;
 
 /**
  * Implementation of App Widget functionality.
@@ -16,7 +15,7 @@ public class PoolTempWidget extends AppWidgetProvider {
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager,
                                 int appWidgetId) {
         
-        CharSequence widgetText = TemperatureDataSource.getInstance(context).getActualTemperature().getTemp()+"°C";
+        CharSequence widgetText = TemperatureDataSource.getInstance(context).getActualTemperature().getTemperature()+"°C";
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_temperature);
         views.setTextViewText(R.id.widgetTemperature, widgetText);

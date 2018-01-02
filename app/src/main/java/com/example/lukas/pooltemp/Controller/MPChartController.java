@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 
 import com.example.lukas.pooltemp.Activitys.MainActivity;
 import com.example.lukas.pooltemp.Model.Temperature;
-import com.example.lukas.pooltemp.R;
 import com.example.lukas.pooltemp.Settings.Settings;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
@@ -51,7 +50,7 @@ public class MPChartController {
 
         for (Temperature temp :
                 temperatureList) {
-            values.add(new Entry(temp.getTime().getTime(), (float) temp.getTemp()));
+            values.add(new Entry(temp.getTime().getTime(), (float) temp.getTemperature()));
         }
 
         LineDataSet lineDataSet = configureLineDataSet(values);

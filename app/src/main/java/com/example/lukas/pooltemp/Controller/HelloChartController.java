@@ -57,8 +57,8 @@ public class HelloChartController {
 
         for (Temperature t :
                 tempList) {
-            if(t.getTemp()>highestValue)
-                highestValue=t.getTemp();
+            if(t.getTemperature()>highestValue)
+                highestValue=t.getTemperature();
         }
 
         List<PointValue> values = new ArrayList<>();
@@ -68,7 +68,7 @@ public class HelloChartController {
         int i = 0;
         for (Temperature t :
                 tempList) {
-            values.add(new PointValue(t.getTime().getTime(), (float) t.getTemp()));
+            values.add(new PointValue(t.getTime().getTime(), (float) t.getTemperature()));
             if (i % 5 == 0&&i!=0)
                 axisValues.add(new AxisValue(t.getTime().getTime()).setLabel(sdf.format(t.getTime())));
 
@@ -112,7 +112,7 @@ public class HelloChartController {
 
         Temperature t = TemperatureDataSource.getInstance(activity).getHighestTemperature();
         if (t != null)
-            YAxis = Axis.generateAxisFromRange(-10, (float) t.getTemp() + 5, 0.5f);
+            YAxis = Axis.generateAxisFromRange(-10, (float) t.getTemperature() + 5, 0.5f);
         else
             YAxis = Axis.generateAxisFromRange(-10, 30, 0.5f);
         YAxis.setMaxLabelChars(4);

@@ -5,8 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteStatement;
-import android.os.Looper;
-import android.widget.Toast;
 
 import com.example.lukas.pooltemp.Activitys.MainActivity;
 import com.example.lukas.pooltemp.Model.Temperature;
@@ -14,11 +12,6 @@ import com.example.lukas.pooltemp.Settings.Settings;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Date;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
@@ -65,7 +58,7 @@ public class TemperatureDataSource {
 //        System.out.println(count);
         ContentValues values = new ContentValues();
         values.put(SQLiteDBHelper.COLUMN_Date, temp.getTime().getTime());
-        values.put(SQLiteDBHelper.COLUMN_TEMP, temp.getTemp());
+        values.put(SQLiteDBHelper.COLUMN_TEMP, temp.getTemperature());
         open();
         long rowId = database.insert(SQLiteDBHelper.TABLE_Temp, null, values);
         Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " where ROWID=" + String.valueOf(rowId), null);
@@ -83,7 +76,7 @@ public class TemperatureDataSource {
         count++;
         open();
 
-        statement.bindDouble(1, temp.getTemp());
+        statement.bindDouble(1, temp.getTemperature());
         statement.bindLong(2, temp.getTime().getTime());
         long rowId = statement.executeInsert();
 //        System.out.println(count);
@@ -208,7 +201,7 @@ public class TemperatureDataSource {
 //                if (i + 1 < result.size()) {
 //                    temp1 = result.get(i);
 //                    temp2 = result.get(i + 1);
-//                    temp1.setTemp((temp1.getTemp() + temp2.getTemp()) / 2);
+//                    temp1.setTemperature((temp1.getTemperature() + temp2.getTemperature()) / 2);
 //                    minimizedList.add(temp1);
 //                }
 //            }
@@ -217,7 +210,7 @@ public class TemperatureDataSource {
 //            temp2=result.get(1);
 //            result.remove(0);
 //            result.remove(0);
-//            temp1.setTemp((temp1.getTemp()+temp2.getTemp())/2);
+//            temp1.setTemperature((temp1.getTemperature()+temp2.getTemperature())/2);
 //            minimizedList.add(temp1);
 //            */
 //            result = minimizedList;
@@ -225,7 +218,7 @@ public class TemperatureDataSource {
 //
 //        for (Temperature t :
 //                result) {
-//            t.setTemp(round(t.getTemp(), 2));
+//            t.setTemperature(round(t.getTemperature(), 2));
 //
 //        }
 //
@@ -435,7 +428,7 @@ public class TemperatureDataSource {
                 if (i + 1 < fullList.size()) {
                     temp1 = fullList.get(i);
                     temp2 = fullList.get(i + 1);
-                    temp1.setTemp((temp1.getTemp() + temp2.getTemp()) / 2);
+                    temp1.setTemperature((temp1.getTemperature() + temp2.getTemperature()) / 2);
                     minimizedList.add(temp1);
                 }
             }
@@ -445,7 +438,7 @@ public class TemperatureDataSource {
             temp2=result.get(1);
             result.remove(0);
             result.remove(0);
-            temp1.setTemp((temp1.getTemp()+temp2.getTemp())/2);
+            temp1.setTemperature((temp1.getTemperature()+temp2.getTemperature())/2);
             minimizedList.add(temp1);
             */
         }
