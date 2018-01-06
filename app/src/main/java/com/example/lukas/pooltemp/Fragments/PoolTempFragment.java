@@ -78,7 +78,6 @@ public class PoolTempFragment extends Fragment {
     TextView tvYesterdayTemp;
     ImageButton ib_zoom;
     ImageButton ib_zoomOut;
-    boolean fabEnabled = true;
     SimpleDateFormat sdf;
     LockableScrollView scrollView;
     boolean isScrollable = true;
@@ -139,11 +138,13 @@ public class PoolTempFragment extends Fragment {
                         activity.resetProgress();
                         setInfoCardText();
                         updateMPChart();
+                        refreshPossibleDates();
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Toast.makeText(activity, "somewthing went wrong", Toast.LENGTH_SHORT).show();
+                        activity.resetProgress();
                     }
                 });
 
@@ -165,28 +166,6 @@ public class PoolTempFragment extends Fragment {
             initSeekBars();
     }
 
-    public void updateHelloChart() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                setInfoCardText();
-                possibleDates = tempSource.getAllPossibleDates();
-                if (!initSeekbars && possibleDates.size() != 0) {
-                    initSeekBars();
-                }
-
-                possibleDates = tempSource.getAllPossibleDates();
-                helloController.setStartEndOfData(minDate, maxDate);
-                //progressDialog.dismiss();
-                setFabEnabled(true);
-
-                pdLoad.dismiss();
-                System.out.println("----------------------------Chart Updated--------------------------");
-            }
-        });
-
-    }
-
     public void updateMPChart() {
         runOnUiThread(new Runnable() {
             @Override
@@ -199,7 +178,6 @@ public class PoolTempFragment extends Fragment {
 
                 mpChartController.setData(tempSource.getTempsBetween(minDate, maxDate));
                 //progressDialog.dismiss();
-                setFabEnabled(true);
 
                 pdLoad.dismiss();
                 System.out.println("----------------------------Chart Updated--------------------------");
@@ -427,10 +405,6 @@ public class PoolTempFragment extends Fragment {
                     //activity.showOrHideFab(true);
                     fab.show();
 
-                if (!fabEnabled) {
-                    //activity.showOrHideFab(false);
-                    fab.hide();
-                }
             }
         });
 
@@ -524,27 +498,6 @@ public class PoolTempFragment extends Fragment {
     /*
     Fab wird Enabled bzw. Disabled und die Farbe wird dementsprechend geändert
  */
-    public void setFabEnabled(final boolean b) {
-        //activity.setFabEnabled(b);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                fab.setEnabled(b);
-                if (b) {
-
-
-                    //fab.setBackgroundColor(Color.parseColor("#FF4081"));
-                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FF4081")));
-
-                } else
-                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#93264B")));
-            }
-        });
-        //int alpha = background.getAlpha();
-
-
-    }
-
     public void setInfoCardText() {
 
         runOnUiThread(new Runnable() {

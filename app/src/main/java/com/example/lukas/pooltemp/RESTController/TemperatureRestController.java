@@ -19,7 +19,7 @@ import java.util.List;
 
 public class TemperatureRestController {
 
-    static final String REST_URL="http://pooltemp.ddns.net:8000/temperature";
+    static final String REST_URL="http://mypooltemp.ddns.net:8000/temperature";
     static final String WIFI_URL="http://192.168.0.179:8080/temperature";
 
     Context context;
@@ -29,12 +29,12 @@ public class TemperatureRestController {
     }
 
     public void getAllTemps(Response.Listener<Temperature[]> listener, Response.ErrorListener errorListener){
-        GsonRequest<Temperature[]> request = new GsonRequest<>(WIFI_URL,Temperature[].class,null,listener,errorListener);
+        GsonRequest<Temperature[]> request = new GsonRequest<>(REST_URL,Temperature[].class,null,listener,errorListener);
                 Volley.newRequestQueue(context).add(request);
     }
 
     public void getTempsSince(Date lastDate, Response.Listener<Temperature[]> listener, Response.ErrorListener errorListener){
-        String url = WIFI_URL+"?since="+lastDate.getTime();
+        String url = REST_URL+"?since="+lastDate.getTime();
         GsonRequest<Temperature[]> request = new GsonRequest<>(url,Temperature[].class,null,listener,errorListener);
         Volley.newRequestQueue(context).add(request);
     }

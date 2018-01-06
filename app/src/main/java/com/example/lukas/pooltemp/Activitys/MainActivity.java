@@ -127,6 +127,7 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Toast.makeText(instance, "somewthing went wrong", Toast.LENGTH_SHORT).show();
+                    resetProgress();
                 }
             });
         }
