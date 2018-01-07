@@ -128,7 +128,6 @@ public class PoolTempFragment extends Fragment {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {                      //Onclicklistener des FloatingActionButtons
-                fab.setEnabled(false);
                 activity.updateProgress(-1, 0);
                 Date lastDate = tempSource.getActualTemperature().getTime();
                 temperatureRestController.getTempsSince(lastDate, new Response.Listener<Temperature[]>() {
