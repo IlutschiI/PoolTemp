@@ -13,6 +13,7 @@ import com.example.lukas.pooltemp.Settings.Settings;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,6 +60,7 @@ public class TemperatureDataSource {
         ContentValues values = new ContentValues();
         values.put(SQLiteDBHelper.COLUMN_Date, temp.getTime().getTime());
         values.put(SQLiteDBHelper.COLUMN_TEMP, temp.getTemperature());
+        values.put(SQLiteDBHelper.COLUMN_SENSOR, temp.getSensorID());
         open();
         long rowId = database.insert(SQLiteDBHelper.TABLE_Temp, null, values);
         Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " where ROWID=" + String.valueOf(rowId), null);
@@ -78,6 +80,11 @@ public class TemperatureDataSource {
 
         statement.bindDouble(1, temp.getTemperature());
         statement.bindLong(2, temp.getTime().getTime());
+        if (temp.getSensorID() == null) {
+            statement.bindString(3, "");
+        } else {
+            statement.bindString(3, temp.getSensorID());
+        }
         long rowId = statement.executeInsert();
 //        System.out.println(count);
 //        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " where ROWID=" + String.valueOf(rowId), null);
@@ -106,8 +113,8 @@ public class TemperatureDataSource {
         database.beginTransaction();
         int count = 0;
         String sql = "Insert into " + SQLiteDBHelper.TABLE_Temp
-                + " (" + SQLiteDBHelper.COLUMN_TEMP + "," + SQLiteDBHelper.COLUMN_Date + ")"
-                + "VALUES (?,?)";
+                + " (" + SQLiteDBHelper.COLUMN_TEMP + "," + SQLiteDBHelper.COLUMN_Date + "," + SQLiteDBHelper.COLUMN_SENSOR + ")"
+                + "VALUES (?,?,?)";
         System.out.println(sql);
         statement = database.compileStatement(sql);
         for (Temperature temp :
@@ -139,14 +146,18 @@ public class TemperatureDataSource {
 
         c.moveToFirst();
         Temperature t;
-        while (!c.isLast()) {
+        while (!c.isAfterLast()) {
 
             t = new Temperature(c.getDouble(2), new java.util.Date(c.getLong(1)), c.getLong(0));
+            if (c.getString(3) == null) {
+                t.setSensorID("");
+            }
+            t.setSensorID(c.getString(3));
             temps.add(t);
             c.moveToNext();
         }
-        t = new Temperature(c.getDouble(2), new java.util.Date(c.getLong(1)), c.getLong(0));
-        temps.add(t);
+        //t = new Temperature(c.getDouble(2), new java.util.Date(c.getLong(1)), c.getLong(0));
+        //temps.add(t);
         //close();
         return temps;
     }
@@ -163,8 +174,8 @@ public class TemperatureDataSource {
         //close();
     }
 
-    public List<Temperature> getTempsBetween(java.util.Date startDate, java.util.Date endDate) {
-        return getTempsBetweenNew(startDate, endDate);
+    public List<Temperature> getTempsBetween(java.util.Date startDate, java.util.Date endDate, String sensorID) {
+        return getTempsBetweenNew(startDate, endDate, sensorID);
 //        List<Temperature> result = new LinkedList<>();
 //        if (startDate == null || endDate == null)
 //            return result;
@@ -225,7 +236,7 @@ public class TemperatureDataSource {
 //        return result;
     }
 
-    public List<Temperature> getTempsBetweenNew(java.util.Date startDate, java.util.Date endDate) {
+    public List<Temperature> getTempsBetweenNew(Date startDate, Date endDate, String sensorID) {
         List<Temperature> temps = new LinkedList<>();
 
         if (countEntries() == 0)
@@ -233,11 +244,16 @@ public class TemperatureDataSource {
 
         //open();
 //        System.out.println(startDate.getTime()+"    "+endDate.getTime());
-
-        String query = "Select * from " + SQLiteDBHelper.TABLE_Temp
-                + " where " + SQLiteDBHelper.COLUMN_Date + "   BETWEEN " + startDate.getTime() + " AND " + "" + endDate.getTime() + ""
-                + " ORDER BY " + SQLiteDBHelper.COLUMN_Date;
-
+        String query;
+        if (sensorID == null || sensorID == "") {
+            query = "Select * from " + SQLiteDBHelper.TABLE_Temp
+                    + " where " + SQLiteDBHelper.COLUMN_Date + "   BETWEEN " + startDate.getTime() + " AND " + "" + endDate.getTime()
+                    + " ORDER BY " + SQLiteDBHelper.COLUMN_Date;
+        } else {
+            query = "Select * from " + SQLiteDBHelper.TABLE_Temp
+                    + " where " + SQLiteDBHelper.COLUMN_Date + "   BETWEEN " + startDate.getTime() + " AND " + "" + endDate.getTime() + " AND " + SQLiteDBHelper.COLUMN_SENSOR + " LIKE '" + sensorID+"'"
+                    + " ORDER BY " + SQLiteDBHelper.COLUMN_Date;
+        }
         System.out.println(query);
 
         Cursor c = database.rawQuery(query, null);
@@ -249,6 +265,7 @@ public class TemperatureDataSource {
         while (!c.isAfterLast()) {
 //            System.out.println(c.getDouble(2)+"     "+c.getDouble(1)+"     "+c.getDouble(0)+"     ");
             t = new Temperature(c.getDouble(2), new java.util.Date(c.getLong(1)), c.getLong(0));
+            t.setSensorID(c.getString(3));
             temps.add(t);
             c.moveToNext();
 //            System.out.println(t.getTime());
@@ -304,12 +321,11 @@ public class TemperatureDataSource {
 
         c.moveToFirst();
         Temperature t;
-        try{
+        try {
             t = new Temperature(round(c.getDouble(2), 1), new java.util.Date(c.getLong(1)), c.getLong(0));
 
-        }
-        catch (Exception e){
-            t=new Temperature(0,new java.util.Date(0));
+        } catch (Exception e) {
+            t = new Temperature(0, new java.util.Date(0));
         }
 
         //close();
@@ -442,7 +458,7 @@ public class TemperatureDataSource {
             minimizedList.add(temp1);
             */
         }
-        if(minimizedList.size()==0)
+        if (minimizedList.size() == 0)
             return fullList;
         return minimizedList;
     }

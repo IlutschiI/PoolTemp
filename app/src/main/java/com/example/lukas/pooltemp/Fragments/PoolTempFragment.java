@@ -16,8 +16,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
+import android.widget.Spinner;
+import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,11 +47,13 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import lecho.lib.hellocharts.listener.LineChartOnValueSelectListener;
 import lecho.lib.hellocharts.model.PointValue;
@@ -84,7 +90,13 @@ public class PoolTempFragment extends Fragment {
     FloatingActionButton fab;
     PoolTempFragment instance;
     ProgressDialog pdLoad;
+
+    Spinner spSensor;
+
     List<Temperature> temps;
+    List<String> sensors=new ArrayList<>();
+
+    String selectedSensor="";
 
     View view;
     TemperatureRestController temperatureRestController;
@@ -93,7 +105,7 @@ public class PoolTempFragment extends Fragment {
     public PoolTempFragment() {
         activity = MainActivity.instance;
         instance = this;
-        temperatureRestController=new TemperatureRestController(activity.getApplicationContext());
+        temperatureRestController = new TemperatureRestController(activity.getApplicationContext());
         if (activity != null)
             tempSource = TemperatureDataSource.getInstance(activity);
     }
@@ -175,7 +187,7 @@ public class PoolTempFragment extends Fragment {
                     initSeekBars();
                 }
 
-                mpChartController.setData(tempSource.getTempsBetween(minDate, maxDate));
+                mpChartController.setData(getTempsBetweenDateForSensor());
                 //progressDialog.dismiss();
 
                 pdLoad.dismiss();
@@ -389,7 +401,9 @@ public class PoolTempFragment extends Fragment {
 
 
 //        initalizeHelloChart();
+        initializeSensorSpinner();
         initializeMPChart();
+
 
         scrollView = ((LockableScrollView) view.findViewById(R.id.scrollview));
         scrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
@@ -424,6 +438,33 @@ public class PoolTempFragment extends Fragment {
         });
     }
 
+    private void initializeSensorSpinner() {
+        spSensor=(Spinner) view.findViewById(R.id.spSensor);
+        for (Temperature temperature :
+                tempSource.getAllTemperatures()) {
+            if(!sensors.contains(temperature.getSensorID())){
+                sensors.add(temperature.getSensorID());
+            }
+        }
+        ArrayAdapter<String> adapter=new ArrayAdapter<String>(this.getActivity(),android.R.layout.simple_spinner_item,sensors);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spSensor.setAdapter(adapter);
+
+        spSensor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+               selectedSensor= (String)adapterView.getItemAtPosition(i);
+               updateMPChart();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                selectedSensor="";
+                updateMPChart();
+            }
+        });
+    }
+
     private void initializeMPChart() {
         mpChart = (LineChart) view.findViewById(R.id.mpLinechart);
         mpChart.setOnTouchListener(new View.OnTouchListener() {
@@ -453,10 +494,16 @@ public class PoolTempFragment extends Fragment {
 
         mpChartController = new MPChartController(activity, mpChart);
 
-        mpChartController.setData(tempSource.getAllTemperatures());
-        mpChartController.setData(tempSource.getTempsBetween(minDate, maxDate));
+        //mpChartController.setData(tempSource.getAllTemperatures());
+
+        mpChartController.setData(getTempsBetweenDateForSensor());
         pdLoad.dismiss();
 
+    }
+
+    private List<Temperature> getTempsBetweenDateForSensor() {
+        List<Temperature> temperatureList = tempSource.getTempsBetween(minDate, maxDate,selectedSensor);
+        return temperatureList;
     }
 
     private void initalizeHelloChart() {
@@ -475,8 +522,15 @@ public class PoolTempFragment extends Fragment {
         });
 
         helloController = new HelloChartController(activity, helloChart);
-        if (temps == null || temps.size() == 0)
+        if (temps == null || temps.size() == 0) {
             temps = tempSource.getAllTemperatures();
+            for (Temperature temperature :
+                    temps) {
+                if(sensors.contains(temperature.getSensorID())){
+                    sensors.add(temperature.getSensorID());
+                }
+            }
+        }
         helloController.setData(temps);
         updateMPChart();
 

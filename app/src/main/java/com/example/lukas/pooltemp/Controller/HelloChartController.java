@@ -150,7 +150,7 @@ public class HelloChartController {
 
     public void setStartEndOfData(Date startDate, Date endDate) {
 
-        List<Temperature> tempList = TemperatureDataSource.getInstance(activity).getTempsBetween(startDate, endDate);
+        List<Temperature> tempList = TemperatureDataSource.getInstance(activity).getTempsBetween(startDate, endDate,"");
 
         setData(tempList);
 

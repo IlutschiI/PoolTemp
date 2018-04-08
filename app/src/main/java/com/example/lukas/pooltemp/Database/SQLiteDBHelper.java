@@ -13,17 +13,19 @@ public class SQLiteDBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_ID = "_id";
     public static final String COLUMN_Date = "time";
     public static final String COLUMN_TEMP="temp";
+    public static final String COLUMN_SENSOR="sensorID";
 
 
     private static final String DATABASE_NAME = "temp.db";
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
 
     // Database creation sql statement
     private static final String DATABASE_CREATE = "create table "
             + TABLE_Temp + "( " + COLUMN_ID
             + " integer primary key autoincrement, "
             + COLUMN_Date + " Long not null, "
-            +COLUMN_TEMP+" Double not null);";
+            +COLUMN_TEMP+" Double not null," +
+            COLUMN_SENSOR+" Text);";
 
 
     public SQLiteDBHelper(Context context) {
