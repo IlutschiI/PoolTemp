@@ -120,7 +120,7 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onResponse(Temperature[] response) {
                     TempSource.insertTemperatureMany(Arrays.asList(response),instance);
-                    poolFragment.updateMPChart();
+                    poolFragment.updateMPChart(true);
                     poolFragment.refreshPossibleDates();
                 }
             }, new Response.ErrorListener() {
@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity
                 public void onResponse(Temperature[] response) {
                     TempSource.clearTable();
                     TempSource.insertTemperatureMany(Arrays.asList(response),instance);
-                    poolFragment.updateMPChart();
+                    poolFragment.updateMPChart(true);
                     poolFragment.refreshPossibleDates();
                     resetProgress();
                 }

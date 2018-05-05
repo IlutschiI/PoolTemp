@@ -50,7 +50,7 @@ public class RestController {
                         temperatureDataSource.clearTable();
 
                         if(response.length()==0) {
-                            pf.updateMPChart();
+                            pf.updateMPChart(true);
                             return;
                         }
 
@@ -89,7 +89,7 @@ public class RestController {
 
 
                         pf.refreshPossibleDates();
-                        pf.updateMPChart();
+                        pf.updateMPChart(true);
                         c.resetProgress();
                     }
                 }).start();
@@ -102,7 +102,7 @@ public class RestController {
             public void onErrorResponse(VolleyError error) {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
-                pf.updateMPChart();
+                pf.updateMPChart(true);
                 c.resetProgress();
             }
         });
@@ -123,7 +123,7 @@ public class RestController {
                         //temperatureDataSource.clearTable();
 
                         if(response.length()==0) {
-                            pf.updateMPChart();
+                            pf.updateMPChart(true);
                             return;
                         }
 
@@ -156,7 +156,7 @@ public class RestController {
                         }
                         // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
                         pf.refreshPossibleDates();
-                        pf.updateMPChart();
+                        pf.updateMPChart(true);
                         c.resetProgress();
                     }
                 }).start();
@@ -191,7 +191,7 @@ public class RestController {
 
 
                         if(response.length()==0) {
-                            pf.updateMPChart();
+                            pf.updateMPChart(true);
                             return;
                         }
 
@@ -224,7 +224,7 @@ public class RestController {
 
                         }
                         // Toast.makeText(c,t,Toast.LENGTH_LONG).show();
-                        pf.updateMPChart();
+                        pf.updateMPChart(true);
                         c.resetProgress();
                     }
                 }).start();
@@ -238,7 +238,7 @@ public class RestController {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
                 pf.refreshPossibleDates();
-                pf.updateMPChart();
+                pf.updateMPChart(true);
                 c.resetProgress();
             }
         });
@@ -257,7 +257,7 @@ public class RestController {
                 //temperatureDataSource.clearTable();
 
                 if(response.length()==0) {
-                    pf.updateMPChart();
+                    pf.updateMPChart(true);
                     return;
                 }
 
@@ -290,7 +290,7 @@ public class RestController {
                  Toast.makeText(c,"Daten wurde über WIFI abgerufen",Toast.LENGTH_LONG).show();
                 c.resetProgress();
                 pf.refreshPossibleDates();
-                pf.updateMPChart();
+                pf.updateMPChart(true);
 
 
             }
@@ -299,7 +299,7 @@ public class RestController {
             public void onErrorResponse(VolleyError error) {
                 TemperatureDataSource temperatureDataSource = TemperatureDataSource.getInstance(c);
                 //temperatureDataSource.clearTable();
-                pf.updateMPChart();
+                pf.updateMPChart(true);
                 Toast.makeText(c.getBaseContext(),"Daten konnten nicht aktualisiert werden",Toast.LENGTH_LONG).show();
                 c.resetProgress();
             }

@@ -162,10 +162,10 @@ public class TemperatureDataSource {
         return temps;
     }
 
-    public List<java.util.Date> getAllPossibleDates() {
+    public List<java.util.Date> getAllPossibleDates(String sensor) {
 
 
-        return generateDatebetween(getMinDate(), getMaxDate());
+        return generateDatebetween(getMinDate(sensor), getMaxDate(sensor));
     }
 
     public void clearTable() {
@@ -284,10 +284,10 @@ public class TemperatureDataSource {
         return ret;
     }
 
-    public Temperature getHighestTemperature() {
+    public Temperature getHighestTemperature(String sensor) {
 
         open();
-        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_TEMP + " DESC", null);
+        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp+ " where "+SQLiteDBHelper.COLUMN_SENSOR + " = '"+sensor+"'" + " ORDER BY " + SQLiteDBHelper.COLUMN_TEMP + " DESC", null);
 
         c.moveToFirst();
         if (!c.isAfterLast()) {
@@ -300,10 +300,10 @@ public class TemperatureDataSource {
 
     }
 
-    public Temperature getLowestTemperature() {
+    public Temperature getLowestTemperature(String sensor) {
 
         open();
-        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_TEMP, null);
+        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp+ " where "+SQLiteDBHelper.COLUMN_SENSOR + " = '"+sensor+"'" + " ORDER BY " + SQLiteDBHelper.COLUMN_TEMP, null);
 
         c.moveToFirst();
 
@@ -314,10 +314,10 @@ public class TemperatureDataSource {
 
     }
 
-    public Temperature getActualTemperature() {
+    public Temperature getActualTemperature(String sensor) {
 
         open();
-        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp + " ORDER BY " + SQLiteDBHelper.COLUMN_Date + " DESC", null);
+        Cursor c = database.rawQuery("Select * from " + SQLiteDBHelper.TABLE_Temp+ " where "+SQLiteDBHelper.COLUMN_SENSOR + " = '"+sensor+"'" + " ORDER BY " + SQLiteDBHelper.COLUMN_Date + " DESC", null);
 
         c.moveToFirst();
         Temperature t;
@@ -333,9 +333,9 @@ public class TemperatureDataSource {
 
     }
 
-    public int getDateRange() {
+    public int getDateRange(String sensor) {
 
-        List<java.util.Date> dates = getAllPossibleDates();
+        List<java.util.Date> dates = getAllPossibleDates(sensor);
 
         return dates.size() - 1;
         /*
@@ -350,7 +350,7 @@ public class TemperatureDataSource {
 
     }
 
-    public double getAverageOfYesterday() {
+    public double getAverageOfYesterday(String sensor) {
 
         open();
         Calendar calendar = GregorianCalendar.getInstance();
@@ -368,7 +368,7 @@ public class TemperatureDataSource {
         long endDate = calendar.getTimeInMillis();
 
         String query = "Select AVG(" + SQLiteDBHelper.COLUMN_TEMP + ") from " + SQLiteDBHelper.TABLE_Temp +
-                " where " + SQLiteDBHelper.COLUMN_Date + " >= " + startDate + " and " + SQLiteDBHelper.COLUMN_Date + " <= " + endDate;
+                " where " + SQLiteDBHelper.COLUMN_Date + " >= " + startDate + " and " + SQLiteDBHelper.COLUMN_Date + " <= " + endDate+ " and "+SQLiteDBHelper.COLUMN_SENSOR + " = '"+sensor+"'";
 
         Cursor c = database.rawQuery(query, null);
 
@@ -386,12 +386,12 @@ public class TemperatureDataSource {
         return bd.doubleValue();
     }
 
-    public java.util.Date getMinDate() {
+    public java.util.Date getMinDate(String sensor) {
         if (countEntries() == 0)
             return new java.util.Date(Long.MIN_VALUE);
 
         open();
-        Cursor c = database.rawQuery("Select Min(" + SQLiteDBHelper.COLUMN_Date + ") from " + SQLiteDBHelper.TABLE_Temp, null);
+        Cursor c = database.rawQuery("Select Min(" + SQLiteDBHelper.COLUMN_Date + ") from " + SQLiteDBHelper.TABLE_Temp+ " where "+SQLiteDBHelper.COLUMN_SENSOR + " = '"+sensor+"'", null);
 
         c.moveToFirst();
 
@@ -401,12 +401,12 @@ public class TemperatureDataSource {
         return new java.util.Date(ret);
     }
 
-    public java.util.Date getMaxDate() {
+    public java.util.Date getMaxDate(String sensor) {
         if (countEntries() == 0)
             return new java.util.Date(Long.MIN_VALUE);
 
         open();
-        Cursor c = database.rawQuery("Select Max(" + SQLiteDBHelper.COLUMN_Date + ") from " + SQLiteDBHelper.TABLE_Temp, null);
+        Cursor c = database.rawQuery("Select Max(" + SQLiteDBHelper.COLUMN_Date + ") from " + SQLiteDBHelper.TABLE_Temp+ " where "+SQLiteDBHelper.COLUMN_SENSOR + " = '"+sensor+"'", null);
 
         c.moveToFirst();
         long ret = c.getLong(0);

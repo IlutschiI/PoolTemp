@@ -1,8 +1,6 @@
 package com.example.lukas.pooltemp.Fragments;
 
 import android.app.ProgressDialog;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,7 +19,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,12 +26,10 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.example.lukas.pooltemp.Activitys.MainActivity;
 import com.example.lukas.pooltemp.Adapter.LockableScrollView;
-import com.example.lukas.pooltemp.Controller.HelloChartController;
 import com.example.lukas.pooltemp.Controller.MPChartController;
 import com.example.lukas.pooltemp.Database.TemperatureDataSource;
 import com.example.lukas.pooltemp.Model.Temperature;
 import com.example.lukas.pooltemp.R;
-import com.example.lukas.pooltemp.RESTController.RestController;
 import com.example.lukas.pooltemp.RESTController.TemperatureRestController;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
@@ -53,7 +48,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 import lecho.lib.hellocharts.listener.LineChartOnValueSelectListener;
 import lecho.lib.hellocharts.model.PointValue;
@@ -63,7 +57,6 @@ import lecho.lib.hellocharts.model.PointValue;
  */
 public class PoolTempFragment extends Fragment {
 
-    HelloChartController helloController;
     MainActivity activity;
     lecho.lib.hellocharts.view.LineChartView helloChart;
     LineChart mpChart;
@@ -121,7 +114,7 @@ public class PoolTempFragment extends Fragment {
         }
         view = inflater.inflate(R.layout.content_main, container, false);
 
-        possibleDates = tempSource.getAllPossibleDates();
+        possibleDates = tempSource.getAllPossibleDates(selectedSensor);
         if (!possibleDates.isEmpty()) {
             minDate = possibleDates.get(0);
             maxDate = possibleDates.get(possibleDates.size() - 1);
@@ -141,14 +134,14 @@ public class PoolTempFragment extends Fragment {
             @Override
             public void onClick(View view) {                      //Onclicklistener des FloatingActionButtons
                 activity.updateProgress(-1, 0);
-                Date lastDate = tempSource.getActualTemperature().getTime();
+                Date lastDate = tempSource.getActualTemperature(selectedSensor).getTime();
                 temperatureRestController.getTempsSince(lastDate, new Response.Listener<Temperature[]>() {
                     @Override
                     public void onResponse(Temperature[] response) {
                         tempSource.insertTemperatureMany(Arrays.asList(response), activity);
                         activity.resetProgress();
                         setInfoCardText();
-                        updateMPChart();
+                        updateMPChart(true);
                         refreshPossibleDates();
                     }
                 }, new Response.ErrorListener() {
@@ -163,7 +156,7 @@ public class PoolTempFragment extends Fragment {
         });
 
         setInfoCardText();
-
+        updateMPChart(false);
         return view;
     }
 
@@ -177,13 +170,13 @@ public class PoolTempFragment extends Fragment {
             initSeekBars();
     }
 
-    public void updateMPChart() {
+    public void updateMPChart(final boolean resetDateSeekbars) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 setInfoCardText();
-                possibleDates = tempSource.getAllPossibleDates();
-                if (!initSeekbars && possibleDates.size() != 0) {
+                possibleDates = tempSource.getAllPossibleDates(selectedSensor);
+                if (possibleDates.size() != 0&&resetDateSeekbars) {
                     initSeekBars();
                 }
 
@@ -202,7 +195,7 @@ public class PoolTempFragment extends Fragment {
         ttSeekbar = (CardView) view.findViewById(R.id.ttSeekbar);
         sbTimeStart = (SeekBar) view.findViewById(R.id.sbTime);
 
-        sbTimeStart.setMax(tempSource.getDateRange());
+        sbTimeStart.setMax(tempSource.getDateRange(selectedSensor));
         sbTimeStart.incrementProgressBy(1);
         sbTimeStart.setProgress(0);
         Calendar calendar = Calendar.getInstance();
@@ -284,7 +277,7 @@ public class PoolTempFragment extends Fragment {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        updateMPChart();
+                        updateMPChart(false);
                     }
                 }).start();
             }
@@ -299,9 +292,9 @@ public class PoolTempFragment extends Fragment {
         maxDate = calendar.getTime();
         ((TextView) ttSeekbarEnd.findViewById(R.id.ttSeekbarEndValue)).setText(sdf.format(calendar.getTime()));
         sbTimeEnd = (SeekBar) view.findViewById(R.id.sbTimeEnd);
-        sbTimeEnd.setMax(tempSource.getDateRange());
+        sbTimeEnd.setMax(tempSource.getDateRange(selectedSensor));
         sbTimeEnd.incrementProgressBy(1);
-        sbTimeEnd.setProgress(tempSource.getDateRange());
+        sbTimeEnd.setProgress(tempSource.getDateRange(selectedSensor));
         sbTimeEnd.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -318,7 +311,6 @@ public class PoolTempFragment extends Fragment {
                 if (i < sbTimeStart.getProgress()) {
                     seekBar.setProgress(i + 1);
                     return;
-                    // TODO do the same as done in sbTimeStart
                 }
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTime(possibleDates.get(0));
@@ -373,7 +365,7 @@ public class PoolTempFragment extends Fragment {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        updateMPChart();
+                        updateMPChart(false);
                     }
                 }).start();
             }
@@ -454,13 +446,13 @@ public class PoolTempFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
                selectedSensor= (String)adapterView.getItemAtPosition(i);
-               updateMPChart();
+               updateMPChart(true);
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
                 selectedSensor="";
-                updateMPChart();
+                updateMPChart(true);
             }
         });
     }
@@ -506,75 +498,30 @@ public class PoolTempFragment extends Fragment {
         return temperatureList;
     }
 
-    private void initalizeHelloChart() {
-        helloChart = (lecho.lib.hellocharts.view.LineChartView) view.findViewById(R.id.helloLinechart);
-        helloChart.setOnValueTouchListener(new LineChartOnValueSelectListener() {
-            @Override
-            public void onValueSelected(int lineIndex, int pointIndex, PointValue value) {
-                Temperature accTemp = new Temperature(value.getY(), new Date((long) value.getX()));
-                setSelectedPointCardText(accTemp);
-            }
-
-            @Override
-            public void onValueDeselected() {
-                setSelectedPointCardText(null);
-            }
-        });
-
-        helloController = new HelloChartController(activity, helloChart);
-        if (temps == null || temps.size() == 0) {
-            temps = tempSource.getAllTemperatures();
-            for (Temperature temperature :
-                    temps) {
-                if(sensors.contains(temperature.getSensorID())){
-                    sensors.add(temperature.getSensorID());
-                }
-            }
-        }
-        helloController.setData(temps);
-        updateMPChart();
-
-
-        helloChart.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == MotionEvent.ACTION_CANCEL || motionEvent.getAction() != MotionEvent.ACTION_UP)
-                    isScrollable = false;
-                else
-                    isScrollable = true;
-                scrollView.setScrollable(isScrollable);
-                return false;
-            }
-        });
-    }
-
-    /*
-    Fab wird Enabled bzw. Disabled und die Farbe wird dementsprechend geändert
- */
     public void setInfoCardText() {
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    tvHighestTemp.setText("" + tempSource.getHighestTemperature().getTemperature() + "°C");
+                    tvHighestTemp.setText("" + tempSource.getHighestTemperature(selectedSensor).getTemperature() + "°C");
                 } catch (Exception e) {
                     tvHighestTemp.setText("N/A");
                 }
 
                 try {
-                    tvLowestTemp.setText("" + tempSource.getLowestTemperature().getTemperature() + "°C");
+                    tvLowestTemp.setText("" + tempSource.getLowestTemperature(selectedSensor).getTemperature() + "°C");
                 } catch (Exception e) {
                     tvLowestTemp.setText("N/A");
                 }
 
                 try {
-                    tvAccTemp.setText("" + tempSource.getActualTemperature().getTemperature() + "°C");
+                    tvAccTemp.setText("" + tempSource.getActualTemperature(selectedSensor).getTemperature() + "°C");
                 } catch (Exception e) {
                     tvAccTemp.setText("N/A");
                 }
                 try {
-                    tvYesterdayTemp.setText("" + tempSource.getAverageOfYesterday() + "°C");
+                    tvYesterdayTemp.setText("" + tempSource.getAverageOfYesterday(selectedSensor) + "°C");
                 } catch (Exception e) {
                     tvYesterdayTemp.setText("N/A");
                 }
@@ -618,7 +565,7 @@ public class PoolTempFragment extends Fragment {
             @Override
             public void run() {
 
-                possibleDates = tempSource.getAllPossibleDates();
+                possibleDates = tempSource.getAllPossibleDates(selectedSensor);
                 if (!possibleDates.isEmpty()) {
                     initSeekBars();
                 }
